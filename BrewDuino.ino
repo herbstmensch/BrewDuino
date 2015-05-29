@@ -25,10 +25,17 @@ int16_t lastEncoderValue, encoderValue;
 #define STATE_MAISCHEN 2
 #define STATE_KOCHEN 3
 #define STATE_SETTINGS 4
+#define STATE_MAISCHEN_START 0
 #define STATE_MAISCHEN_EMT 1
 #define STATE_MAISCHEN_AR 2
 #define STATE_MAISCHEN_R 3
 #define STATE_MAISCHEN_AMT 4
+#define STATE_KOCHEN_KZ 1 
+#define STATE_KOCHEN_AHG 2
+#define STATE_KOCHEN_HG 3
+#define STATE_KOCHEN_WT 4
+#define STATE_KOCHEN_SKT 5
+#define STATE_KOCHEN_KT 6
 
 //Variablen initialisieren
 int state = STATE_MENU;
@@ -163,11 +170,12 @@ void menu() {
 }
 
 void maischen(){
-  //Werte laden
+  lcd.clrScr();
+  lcd.print("--Maischen--",CENTER,0);
+  
   int stateMaischen = STATE_MAISCHEN_EMT;
+  
   while(state == STATE_MAISCHEN){
-    lcd.clrScr();
-    lcd.print("--Maischen--",CENTER,0);
     switch(stateMaischen){
       case STATE_MAISCHEN_EMT: //Einmaischtemp festlegen
         break;
@@ -176,6 +184,8 @@ void maischen(){
       case STATE_MAISCHEN_R: //Rasten festlegen
         break;
       case STATE_MAISCHEN_AMT: //Abmaischtemperatur festlegen
+        break;
+      case STATE_MAISCHEN_WEMT: //Warte auf Abmaischtemperatur
         break;
     } 
     
@@ -191,13 +201,35 @@ void maischen(){
 
 void kochen(){
   sollTemp = 100;
+  lcd.clrScr();
+  lcd.print("--Kochen--",CENTER,0);
   
-  ClickEncoder::Button b = encoder->getButton();
+  int stateKochen = STATE_KOCHEN_KZ;
+  
+  while(state == STATE_KOCHEN){
+    switch(stateKochen){
+      case STATE_KOCHEN_KZ: //Einmaischtemp festlegen
+        break;
+      case STATE_KOCHEN_AHG: //Anzahl Hopfengaben festlegen
+        break;
+      case STATE_KOCHEN_HG: //Hopfengaben festlegen
+        break;
+      case STATE_KOCHEN_WT: //Warten auf Temperatur
+        break;
+      case STATE_KOCHEN_SKT: //Starte Kochtimer
+        break;
+      case STATE_KOCHEN_KT: //Starte Kochtimer
+        break;
+    } 
+    
+    ClickEncoder::Button b = encoder->getButton();
     if (b != ClickEncoder::Open) {
       if( b == ClickEncoder::Held ){
           returnToMenu();
       }
     }   
+    
+  }  
 }
 
 void returnToMenu(){
