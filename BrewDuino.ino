@@ -7,6 +7,8 @@
 #include <ClickEncoder.h>
 #include <TimerOne.h>
 #include <FiniteStateMachine.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 //Konfigurationsparameter festlegen
 int tempOffset = 1;
@@ -18,6 +20,11 @@ extern uint8_t SmallFont[];
 //Encoder einrichten;
 ClickEncoder *encoder;
 int16_t lastEncoderValue, encoderValue;
+
+//Temperatursensor DS1820 Initialisierung
+OneWire oneWire(5);
+DallasTemperature sensors(&oneWire);
+DeviceAddress thermometer;
 
 //Main FSM und States definieren
 State stateMenu = State(enterMenu, menu, NULL);
@@ -49,7 +56,10 @@ FSM fsmSettings = FSM(enterEinmaischTemp);
 
 //Variablen initialisieren
 int selectedMenuEntry, lastSelectedMenuEntry;
+int lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp;
+int lastReadIndex=0;
+
 bool isHeating;
 
 void setup()   {
@@ -74,6 +84,11 @@ void setup()   {
   //Temperaturen und Heizung initialisieren
   sollTemp = 0;
   isHeating = false;
+  
+  //Temperatursensor initialisieren
+  sensors.getAddress(thermometer, 0);
+  sensors.setResolution(thermometer, 9);
+  //---------------------------------------------------------------
 
   delay(5000);
 }
@@ -172,7 +187,17 @@ void kochen(){
 }*/
 
 void readTemperature(){
-  temp = 59+random(1);
+  //Aktuelle Temperatur lesen.
+  sensors.requestTemperatures(); 
+  lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
+  int sum = 0;
+  for(int i = 0; i < 9; i++)
+    sum += lastTemps;
+    
+  //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
+  temp = sum / 10;
+  if(lastReadIndex >= 10)
+    lastReadIndex = 0;
 }
 
 void checkHeatingStatus(){
