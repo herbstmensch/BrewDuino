@@ -24,7 +24,6 @@ int16_t lastEncoderValue, encoderValue;
 //Temperatursensor DS1820 Initialisierung
 OneWire oneWire(5);
 DallasTemperature sensors(&oneWire);
-DeviceAddress thermometer;
 
 //Main FSM und States definieren
 State stateMenu = State(enterMenu, menu, NULL);
@@ -56,7 +55,7 @@ FSM fsmSettings = FSM(enterEinmaischTemp);
 
 //Variablen initialisieren
 int selectedMenuEntry, lastSelectedMenuEntry;
-int lastTemps[]={0,0,0,0,0,0,0,0,0,0};
+float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp;
 int lastReadIndex=0;
 
@@ -86,6 +85,7 @@ void setup()   {
   isHeating = false;
   
   //Temperatursensor initialisieren
+  sensors.begin();
   sensors.getAddress(thermometer, 0);
   sensors.setResolution(thermometer, 9);
   //---------------------------------------------------------------
@@ -189,8 +189,8 @@ void kochen(){
 void readTemperature(){
   //Aktuelle Temperatur lesen.
   sensors.requestTemperatures(); 
-  lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
-  int sum = 0;
+  lastTemps[lastReadIndex++] = sensors.getTempCByIndex(0);
+  float sum = 0;
   for(int i = 0; i < 9; i++)
     sum += lastTemps;
     
