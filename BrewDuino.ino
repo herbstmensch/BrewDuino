@@ -6,9 +6,11 @@
 #include <LCD5110_Basic.h>
 #include <ClickEncoder.h>
 #include <TimerOne.h>
-#include <FiniteStateMachine.h>
+#include "FiniteStateMachine.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
+
+#define BG_LIGHT_PIN 7
 
 //Konfigurationsparameter festlegen
 int tempOffset = 1;
@@ -18,26 +20,27 @@ LCD5110 lcd(8, 9, 10, 11, 12);
 extern uint8_t SmallFont[];
 
 //Encoder einrichten;
+#define ENC_HALFSTEP
 ClickEncoder *encoder;
-int16_t lastEncoderValue, encoderValue;
+int16_t lastEncoderValue, encoderValue, savedEncoderValue;
 
 //Temperatursensor DS1820 Initialisierung
 OneWire oneWire(5);
 DallasTemperature sensors(&oneWire);
 
 //Main FSM und States definieren
-State stateMenu = State(enterMenu, menu, NULL);
+State stateMenu = State(enterMenu, menu, leaveMenu);
 State stateMaischen = State(enterMaischen, maischen, leaveMaischen);
 State stateKochen = State(enterKochen, kochen, leaveKochen);
 //State stateSettings = State(enterSettings, settings, NULL);
 FSM fsmMain = FSM(stateMenu);
 
 //Maischen FSM und States definieren
-State stateEnterEinmaischTemp = State(enterEinmaischTemp);
-State stateEnterAnzahlRaten = State(enterAnzahlRaten);
-State stateDefineRast = State(defineRast);
-State stateEnterAbmaischTemp = State(enterAbmaischTemp);
-State stateDoMaischen = State(doMaischen);
+State stateEnterEinmaischTemp = State(storeEncoderValue,enterEinmaischTemp,NULL);
+State stateEnterAnzahlRasten = State(storeEncoderValue,enterAnzahlRasten,NULL);
+State stateDefineRast = State(storeEncoderValue,defineRast,NULL);
+State stateEnterAbmaischTemp = State(storeEncoderValue,enterAbmaischTemp,NULL);
+State stateDoMaischen = State(enterDoMaischen, doMaischen,NULL);
 FSM fsmMaischen = FSM(stateEnterEinmaischTemp);
 
 //Kochen FSM und States definieren
@@ -59,10 +62,16 @@ float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp;
 int lastReadIndex=0;
 
+int* rastTemp=0;
+int* rastDauer=0;
+
 bool isHeating;
 
 void setup()   {
   Serial.begin(9600);
+  
+  pinMode(BG_LIGHT_PIN, OUTPUT);
+  digitalWrite(BG_LIGHT_PIN, LOW);
   
   //LCD Setup 
   lcd.InitLCD();
@@ -74,7 +83,7 @@ void setup()   {
   lcd.print(COPYRIGHT2, 42, 40);
   
   //Encoder und Interrupt Setup
-  encoder = new ClickEncoder(2, 3, 4, 2);
+  encoder = new ClickEncoder(2, 3, 4, 4);
   encoder->setAccelerationEnabled(false);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr); 
@@ -86,11 +95,9 @@ void setup()   {
   
   //Temperatursensor initialisieren
   sensors.begin();
-  sensors.getAddress(thermometer, 0);
-  sensors.setResolution(thermometer, 9);
   //---------------------------------------------------------------
 
-  delay(5000);
+  delay(2000);
 }
 
 void loop() {
@@ -110,14 +117,21 @@ void loop() {
 }
 
 void enterMenu(){
+  encoder->setAccelerationEnabled(false);
   selectedMenuEntry = 0;
-  lastMenuEntry = -1;
-  sollTemo = 0;
+  lastSelectedMenuEntry = -1;
+  sollTemp = 0;
+  clrScr(true,false);
+  lcd.print(PROG_NAME" "PROG_VERSION, CENTER, 0);
+}
+
+void leaveMenu(){
+  encoder->setAccelerationEnabled(true);
 }
 
 void enterMaischen(){
-  fsmMaischen.immediateTransitionTo();
-  lcd.clrScr();
+  //fsmMaischen.immediateTransitionTo();
+  clrScr(true,false);
   lcd.print("--Maischen--",CENTER,0);
 }
 
@@ -127,8 +141,8 @@ void leaveMaischen(){
 
 void enterKochen(){
   sollTemp = 100;
-  fsmMaischen.immediateTransitionTo();
-  lcd.clrScr();
+  //fsmMaischen.immediateTransitionTo();
+  clrScr(true,false);
   lcd.print("--Kochen--",CENTER,0);
 }
 
@@ -153,11 +167,10 @@ void menu() {
   
   if(selectedMenuEntry != lastSelectedMenuEntry){
     lastSelectedMenuEntry = selectedMenuEntry;
-    lcd.clrScr();
-    lcd.print(PROG_NAME" "PROG_VERSION, CENTER, 0);
-    lcd.print("=>", 5, 16+selectedMenuEntry*8);
-    lcd.print("Maischen", 30, 16);
-    lcd.print("Kochen", 30, 24);
+    clrScr(false,false);
+    lcd.print("=>", 10, 16+selectedMenuEntry*8);
+    lcd.print("Maischen", 25, 16);
+    lcd.print("Kochen", 25, 24);
     //lcd.print("Parameter", 30, 28);
   }
   
@@ -186,13 +199,17 @@ void kochen(){
   fsmSettings.update();
 }*/
 
+void storeEncoderValue(){
+  savedEncoderValue = encoderValue;
+}
+
 void readTemperature(){
   //Aktuelle Temperatur lesen.
   sensors.requestTemperatures(); 
   lastTemps[lastReadIndex++] = sensors.getTempCByIndex(0);
   float sum = 0;
   for(int i = 0; i < 9; i++)
-    sum += lastTemps;
+    sum += lastTemps[i];
     
   //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
   temp = sum / 10;
@@ -224,13 +241,34 @@ void turnOnHeating(){
 
 void addTemperature() {
   //Wenn die aktuelle Temperatur nciht der angezeigten entspricht, aktualisieren.
-  if(temp != lastTemp){
+  //if(temp != lastTemp){
     lastTemp = temp;
-    lcd.clrRow(5,80);
-    String s = (isHeating ? "H " : "") + "ist: " + temp + "~ C";
+    lcd.clrRow(5);
+    String s = (isHeating ? "H " : "");
+    s += "ist: ";
+    s += temp;
+    s += "~ C";
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, RIGHT, 40);
+ // }
+}
+
+void clrScr(bool clearFirst, bool clearLast){
+  Serial.print("dd");
+  if(clearFirst && clearLast){
+    lcd.clrScr();
+    return;
+  }
+  if(clearFirst){
+    lcd.clrRow(0);
+  }
+  lcd.clrRow(1);
+  lcd.clrRow(2);
+  lcd.clrRow(3);
+  lcd.clrRow(4);
+  if(clearLast){
+    lcd.clrRow(5);
   }
 }
 
