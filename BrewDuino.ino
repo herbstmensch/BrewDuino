@@ -20,7 +20,6 @@ ClickEncoder *encoder;
 int16_t lastEncoderValue, encoderValue;
 
 //Zustände festlegen
-#define STATE_INIT 0
 #define STATE_MENU 1
 #define STATE_MAISCHEN 2
 #define STATE_KOCHEN 3
@@ -88,20 +87,20 @@ void loop() {
     Serial.println(selectedMenuEntry);
   }
     
-    switch(state){
-      case STATE_MENU:
-        menu();
-        break;
-      case STATE_MAISCHEN:
-        maischen();
-        break;
-      case STATE_KOCHEN:
-        kochen();
-        break;
-      case STATE_SETTINGS:
-        settings();
-        break;
-    }
+  switch(state){
+    case STATE_MENU:
+      menu();
+      break;
+    case STATE_MAISCHEN:
+      maischen();
+      break;
+    case STATE_KOCHEN:
+      kochen();
+      break;
+    case STATE_SETTINGS:
+      settings();
+      break;
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
@@ -148,12 +147,10 @@ void addTemperature() {
   if(temp != lastTemp){
     lastTemp = temp;
     lcd.clrRow(5,80);
-    String s = " ist: ";
-    s += temp;
-    s += "~ C";
+    String s = (isHeating ? "H " : "") + "ist: " + temp + "~ C";
     char buf[14];
     s.toCharArray(buf,14);
-    lcd.print(buf, 0, 40);
+    lcd.print(buf, RIGHT, 40);
   }
 }
 
