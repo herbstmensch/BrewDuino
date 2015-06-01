@@ -63,6 +63,8 @@ float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp;
 int lastReadIndex=0;
 
+int lastRest = -1;
+long dauer = 0;
 long storedSystemMillies = 0;
 
 bool isHeating;
