@@ -63,7 +63,7 @@ void defineRast() {
   if(subState == 0 ){
     rastTemp[aktuelleRast] += encoder->getValue()-savedEncoderValue;
   } else {
-    rastDauer[aktuelleRast] += encoder->getValue()-savedEncoderValue;
+    rastDauer[aktuelleRast] += (encoder->getValue()-savedEncoderValue);
   }
     
   clrScr(false,false);
@@ -114,8 +114,8 @@ void enterAbmaischTemp() {
 }
 
 State stateReachEinmaischTemp = State(reachEinmaischTemp);
-State stateReachRastTemp = State(NULL,reachRastTemp,storeMillies);
-State stateWaitRastDauer = State(waitRastDauer);
+State stateReachRastTemp = State(reachRastTemp);
+State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
 State stateReachAbmaischTemp = State(reachAbmaischTemp);
 
 FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
@@ -126,10 +126,6 @@ void enterDoMaischen() {
 
 void doMaischen() {
   fsmMaischeProzess.update();
-}
-
-void storeMillies() {
-  storedSystemMillies = millies();
 }
 
 void reachEinmaischTemp() {
@@ -176,32 +172,51 @@ void reachRastTemp() {
   }
 }
 
+int lastRest = -1;
+int dauer = 0;
+
+void prepareRastDauer() {
+  lastSec = -1;
+  storedSystemMillies = millies();
+  dauer = rastDauer[aktuelleRast]*60*1000;
+}
+
 void waitRastDauer() {
-  clrScr(false,false);
+  int rest = dauer - (millies()-storedSystemMillies);
   
-  String s = "";
-  s += aktuelleRast;
-  s += ". Rast:";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 16);
-  s = "";
-  s += rastTemp[aktuelleRast];
-  s += "~ C / ";
-  s += rastDauer[aktuelleRast];
-  s += "min";
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 24);
+  //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
+  if(lastRest-rest > 1000){
+    lastRest = rest;
+    int min = (rest/1000) / 60;
+    int sec = (rest/1000) % 60;
   
-  long dauer = rastDauer[aktuelleRast]*60*1000;
-  long now = millies();
-  int rest = dauer - (now-storedSystemMillies);
-  int min = (rest/1000) / 60;
-  int sec = (rest/1000) % 60;
-  
+    String s = "";
+    s += aktuelleRast;
+    s += ". Rast:";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 16);
+    s = "";
+    s += rastTemp[aktuelleRast];
+    s += "~ C / ";
+    s += rastDauer[aktuelleRast];
+    s += "min";
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+    
+    s = "noch ";
+    s += min < 10 ? "0":"";
+    s += min;
+    s += ":";
+    s += sec < 10 ? "0":"";
+    s += sec;
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+  }
   if(rest <= 0){
     if(anzahlRasten > aktuelleRast){
       aktuelleRast += 1;
+      lastSec = -1;
       fsmMaischeProzess.immediateTransitionTo(stateWaitRastTemp);
     } else {
       fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
