@@ -6,6 +6,7 @@ int aktuelleHopfengabe=1
 State stateReachKochTemp = State(reachKochmaischTemp);
 State stateWaitRastDauer = State(prepareRastDauer,waitKochDauer,NULL);
 FSM fsmKochProzess = FSM(stateReachKochTemp);
+
 void enterKochzeit() {
   kochzeit += encoder->getValue()-savedEncoderValue;
   clrScr(false,false);
@@ -78,8 +79,12 @@ void defineHopfengaben() {
         }
     }
   } 
-  
+}
+
+void enterDoKochen() {
+  fsmKochProzess.immediateTransitionTo(stateReachEinmaischTemp);
 }
 
 void doKochen() {
+  fsmKochProzess.update();
 }
