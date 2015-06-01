@@ -64,7 +64,7 @@ int temp, lastTemp, sollTemp;
 int lastReadIndex=0;
 
 int* rastTemp=0;
-long* rastDauer=0;
+int* rastDauer=0;
 
 long storedSystemMillies = 0;
 
