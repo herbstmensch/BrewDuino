@@ -175,7 +175,7 @@ void reachRastTemp() {
 }
 
 void prepareRastDauer() {
-  lastSec = -1;
+  lastRest = -1;
   storedSystemMillies = millies();
   dauer = rastDauer[aktuelleRast]*60*1000;
 }
