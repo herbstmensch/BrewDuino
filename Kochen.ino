@@ -4,7 +4,7 @@ int* hopfengaben=0;
 int aktuelleHopfengabe=1
 
 State stateReachKochTemp = State(reachKochmaischTemp);
-State stateWaitRastDauer = State(prepareRastDauer,waitKochDauer,NULL);
+State stateWaitKochDauer = State(prepareKochDauer,waitKochDauer,NULL);
 FSM fsmKochProzess = FSM(stateReachKochTemp);
 
 void enterKochzeit() {
@@ -87,4 +87,46 @@ void enterDoKochen() {
 
 void doKochen() {
   fsmKochProzess.update();
+}
+
+void prepareKochDauer() {
+  lastRest = -1;
+  storedSystemMillies = millies();
+  dauer = kochZeit*60*1000;
+}
+
+void waitKochDauer() {
+  int rest = dauer - (millies()-storedSystemMillies);
+  
+  //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
+  if(lastRest-rest > 1000){
+    lastRest = rest;
+    int min = (rest/1000) / 60;
+    int sec = (rest/1000) % 60;
+  
+    String s = "";
+    s += aktuelleRast;
+    s += "Kochen:";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 16);
+    
+    s = "noch ";
+    s += min < 10 ? "0":"";
+    s += min;
+    s += ":";
+    s += sec < 10 ? "0":"";
+    s += sec;
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+  }
+  if(rest <= 0){
+    if(anzahlRasten > aktuelleRast){
+      aktuelleRast += 1;
+      lastSec = -1;
+      fsmMaischeProzess.immediateTransitionTo(stateWaitRastTemp);
+    } else {
+      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
+    }
+  }
 }
