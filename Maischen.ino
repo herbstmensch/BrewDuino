@@ -114,8 +114,9 @@ void enterAbmaischTemp() {
 }
 
 State stateReachEinmaischTemp = State(reachEinmaischTemp);
-State stateReachRastTemp = State(reachRastTemp);
+State stateReachRastTemp = State(NULL,reachRastTemp,storeMillies);
 State stateWaitRastDauer = State(waitRastDauer);
+State stateReachAbmaischTemp = State(reachAbmaischTemp);
 
 FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
 
@@ -125,6 +126,10 @@ void enterDoMaischen() {
 
 void doMaischen() {
   fsmMaischeProzess.update();
+}
+
+void storeMillies() {
+  storedSystemMillies = millies();
 }
 
 void reachEinmaischTemp() {
@@ -172,5 +177,55 @@ void reachRastTemp() {
 }
 
 void waitRastDauer() {
+  clrScr(false,false);
+  
+  String s = "";
+  s += aktuelleRast;
+  s += ". Rast:";
+  char buf[14];
+  s.toCharArray(buf,14);
+  lcd.print(buf, CENTER, 16);
+  s = "";
+  s += rastTemp[aktuelleRast];
+  s += "~ C / ";
+  s += rastDauer[aktuelleRast];
+  s += "min";
+  s.toCharArray(buf,14);
+  lcd.print(buf, CENTER, 24);
+  
+  long dauer = rastDauer[aktuelleRast]*60*1000;
+  long now = millies();
+  int rest = dauer - (now-storedSystemMillies);
+  int min = (rest/1000) / 60;
+  int sec = (rest/1000) % 60;
+  
+  if(rest <= 0){
+    if(anzahlRasten > aktuelleRast){
+      aktuelleRast += 1;
+      fsmMaischeProzess.immediateTransitionTo(stateWaitRastTemp);
+    } else {
+      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
+    }
+  }
+}
+
+void reachAbmaischTemp {
+  
+  sollTemp = abmaischTemp;
+  
+  clrScr(false,false);
+  
+  lcd.print("Warte auf", CENTER, 16);
+  lcd.print("Abmaischtemp", CENTER, 24);
+  String s = "";
+  s += abmaischTemp;
+  s += "~ C";
+  char buf[14];
+  s.toCharArray(buf,14);
+  lcd.print(buf, CENTER, 32);
+  
+  if(temp >= abmaischTemp){
+    fsmMain.immediateTransitionTo(menu);
+  }
   
 }
