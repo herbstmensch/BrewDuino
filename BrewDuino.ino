@@ -17,6 +17,7 @@ int tempOffset = 1;
 
 //Display einrichten 
 LCD5110 lcd(8, 9, 10, 11, 12);
+//Change in LCD5110 lcd(9,10,11,12,13);
 extern uint8_t SmallFont[];
 
 //Encoder einrichten;
