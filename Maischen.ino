@@ -1,9 +1,21 @@
 int einmaischTemp = 48;
 int abmaischTemp = 78;
 int anzahlRasten = 3;
+int* rastTemp=0;
+int* rastDauer=0;
 
 int aktuelleRast = 0;
 int subState = 0;
+
+int lastRest = -1;
+long dauer = 0;
+
+State stateReachEinmaischTemp = State(reachEinmaischTemp);
+State stateReachRastTemp = State(reachRastTemp);
+State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
+State stateReachAbmaischTemp = State(reachAbmaischTemp);
+
+FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
 
 void enterEinmaischTemp() {
   
@@ -113,13 +125,6 @@ void enterAbmaischTemp() {
   } 
 }
 
-State stateReachEinmaischTemp = State(reachEinmaischTemp);
-State stateReachRastTemp = State(reachRastTemp);
-State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
-State stateReachAbmaischTemp = State(reachAbmaischTemp);
-
-FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
-
 void enterDoMaischen() {
   fsmMaischeProzess.immediateTransitionTo(stateReachEinmaischTemp);
 }
@@ -171,9 +176,6 @@ void reachRastTemp() {
     fsmMaischeProzess.immediateTransitionTo(stateWaitRastDauer);
   }
 }
-
-int lastRest = -1;
-int dauer = 0;
 
 void prepareRastDauer() {
   lastSec = -1;
