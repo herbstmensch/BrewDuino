@@ -7,9 +7,6 @@ int* rastDauer=0;
 int aktuelleRast = 0;
 int subState = 0;
 
-int lastRest = -1;
-long dauer = 0;
-
 State stateReachEinmaischTemp = State(reachEinmaischTemp);
 State stateReachRastTemp = State(reachRastTemp);
 State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
