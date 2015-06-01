@@ -45,10 +45,10 @@ State stateDoMaischen = State(enterDoMaischen, doMaischen,NULL);
 FSM fsmMaischen = FSM(stateEnterEinmaischTemp);
 
 //Kochen FSM und States definieren
-State stateEnterKochzeit = State(enterKochzeit);
-State stateEnterAnzahlHopfengaben = State(enterAnzahlHopfengaben);
-State stateDefineHopfengaben = State(defineHopfengaben);
-State stateDoKochen = State(doKochen);
+State stateEnterKochzeit = State(storeEncoderValue,enterKochzeit,NULL);
+State stateEnterAnzahlHopfengaben = State(storeEncoderValue,enterAnzahlHopfengaben,NULL);
+State stateDefineHopfengaben = State(storeEncoderValue,defineHopfengaben,NULL);
+State stateDoKochen = State(enterDoKochen,doKochen,NULL);
 FSM fsmKochen = FSM(stateEnterKochzeit);
 
 /* 
