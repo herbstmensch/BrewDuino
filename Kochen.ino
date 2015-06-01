@@ -65,7 +65,7 @@ void defineHopfengaben() {
   lcd.invertText(true);
   lcd.printNumI(int(hopfengaben[aktuelleHopfengabe]),57,20);
   lcd.invertText(false);
-  lcd.print("Minuten,15,28);
+  lcd.print("Minuten",15,28);
   
   
   ClickEncoder::Button b = encoder->getButton();
