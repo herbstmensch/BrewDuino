@@ -66,6 +66,8 @@ int lastReadIndex=0;
 int* rastTemp=0;
 int* rastDauer=0;
 
+long storedSystemMillies = 0;
+
 bool isHeating;
 
 void setup()   {
