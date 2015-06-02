@@ -1,35 +1,50 @@
 int kochzeit = 90;
 int anzahlHopfengaben = 3;
 int* hopfengaben=0;
-int aktuelleHopfengabe=1
+int aktuelleHopfengabe=1;
 
-State stateReachKochTemp = State(reachKochmaischTemp);
+State stateReachKochTemp = State(reachKochTemp);
 State stateWaitKochDauer = State(prepareKochDauer,waitKochDauer,NULL);
 FSM fsmKochProzess = FSM(stateReachKochTemp);
 
 void enterKochzeit() {
-  kochzeit += encoder->getValue()-savedEncoderValue;
-  clrScr(false,false);
-  lcd.print("Kochzeit",0,16);
-  lcd.invertText(true);
-  lcd.printNumI(int(kochzeit),15,24);
-  lcd.invertText(false);
-  lcd.print(" min",29,24);
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    kochzeit += encoderValue;
+    if(kochzeit < 1)
+      kochzeit = 1;
+  
+    clrScr(false,false);
+    lcd.print("Kochzeit",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(kochzeit),15,24);
+    lcd.invertText(false);
+    lcd.print(" min",29,24);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-        fsmMaischen.immediateTransitionTo(stateEnterAnzahlHopfengaben);
+        fsmKochen.immediateTransitionTo(stateEnterAnzahlHopfengaben);
     }
   } 
 }
 
 void enterAnzahlHopfengaben() {
-  anzahlHopfengaben += encoder->getValue()-savedEncoderValue;
-  clrScr(false,false);
-  lcd.print("Anz. Hopfeng.",0,16);
-  lcd.invertText(true);
-  lcd.printNumI(int(anzahlHopfengaben),15,24);
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    anzahlHopfengaben += encoderValue;
+    if(anzahlHopfengaben < 0)
+      anzahlHopfengaben = 0;
+      
+    clrScr(false,false);
+    lcd.print("Anz. Hopfeng.",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(anzahlHopfengaben),15,24);
+    lcd.invertText(false);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
@@ -39,34 +54,31 @@ void enterAnzahlHopfengaben() {
         delete [] hopfengaben;
       }
       hopfengaben = new int[anzahlHopfengaben];
-      fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
+      aktuelleHopfengabe = 0;
+      hopfengaben[aktuelleHopfengabe] = 20;
+      if(anzahlHopfengaben > 0)
+        fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
+      else
+        fsmKochen.immediateTransitionTo(stateDoKochen);
     }
   } 
 }
 
 void defineHopfengaben() {
-  
-   if(aktuelleHopfengabe < 0){
-    aktuelleHopfengabe = 0;
-    rastTemp[aktuelleHopfengabe] = einmaischTemp;
-    rastDauer[aktuelleHopfengabe] = 30;
-  }
-  
-  if(subState == 0 ){
-    rastTemp[aktuelleHopfengabe] += encoder->getValue()-savedEncoderValue;
-  } else {
-    rastDauer[aktuelleHopfengabe] += (encoder->getValue()-savedEncoderValue);
-  }
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    hopfengaben[aktuelleHopfengabe] += encoderValue;  
     
-  clrScr(false,false);
-  lcd.printNumI(int(aktuelleHopfengabe+1),8,12);
-  lcd.print(". Hopfeng.",15+(aktuelleHopfengabe>9?7:0),12);
-  lcd.print("Nach :",15,20);
-  lcd.invertText(true);
-  lcd.printNumI(int(hopfengaben[aktuelleHopfengabe]),57,20);
-  lcd.invertText(false);
-  lcd.print("Minuten",15,28);
-  
+    clrScr(false,false);
+    lcd.printNumI(int(aktuelleHopfengabe+1),8,12);
+    lcd.print(". Hopfeng.",15+(aktuelleHopfengabe>9?7:0),12);
+    lcd.print("Nach :",15,20);
+    lcd.invertText(true);
+    lcd.printNumI(int(hopfengaben[aktuelleHopfengabe]),57,20);
+    lcd.invertText(false);
+    lcd.print("Minuten",15,28);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
@@ -82,21 +94,39 @@ void defineHopfengaben() {
 }
 
 void enterDoKochen() {
-  fsmKochProzess.immediateTransitionTo(stateReachEinmaischTemp);
+  fsmKochProzess.immediateTransitionTo(stateReachKochTemp);
 }
 
 void doKochen() {
   fsmKochProzess.update();
 }
 
+void reachKochTemp() {
+  clrScr(false,false);
+  
+  lcd.print("Warte auf", CENTER, 16);
+  lcd.print("Kochtemp.", CENTER, 24);
+  String s = "";
+  s += sollTemp;
+  s += "~ C";
+  char buf[14];
+  s.toCharArray(buf,14);
+  lcd.print(buf, CENTER, 32);
+  
+  if(temp >= sollTemp){
+    fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+  }
+  
+}
+
 void prepareKochDauer() {
   lastRest = -1;
-  storedSystemMillies = millies();
-  dauer = kochZeit*60*1000;
+  storedSystemMillis = millis();
+  dauer = kochzeit*60*1000;
 }
 
 void waitKochDauer() {
-  int rest = dauer - (millies()-storedSystemMillies);
+  int rest = dauer - (millis()-storedSystemMillis);
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
   if(lastRest-rest > 1000){
@@ -104,9 +134,7 @@ void waitKochDauer() {
     int min = (rest/1000) / 60;
     int sec = (rest/1000) % 60;
   
-    String s = "";
-    s += aktuelleRast;
-    s += "Kochen:";
+    String s = "Kochen:";
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
@@ -121,12 +149,6 @@ void waitKochDauer() {
     lcd.print(buf, CENTER, 24);
   }
   if(rest <= 0){
-    if(anzahlRasten > aktuelleRast){
-      aktuelleRast += 1;
-      lastSec = -1;
-      fsmMaischeProzess.immediateTransitionTo(stateWaitRastTemp);
-    } else {
-      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
-    }
+    fsmMain.immediateTransitionTo(stateMenu);
   }
 }

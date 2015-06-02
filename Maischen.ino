@@ -16,18 +16,25 @@ FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
 
 void enterEinmaischTemp() {
   
-  einmaischTemp += encoder->getValue()-savedEncoderValue;
-  clrScr(false,false);
-  lcd.print("Einmaischtmp",0,16);
-  lcd.invertText(true);
-  lcd.printNumI(int(einmaischTemp),15,24);
-  lcd.invertText(false);
-  lcd.print("~C",29,24);
+  encoderValue += encoder->getValue();
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    einmaischTemp += encoderValue;  
+    if(einmaischTemp < 0)
+      einmaischTemp = 0;
+ 
+    clrScr(false,false);
+    lcd.print("Einmaischtmp",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(einmaischTemp),15,24);
+    lcd.invertText(false);
+    lcd.print("~C",29,24);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-        fsmMaischen.immediateTransitionTo(stateEnterAnzahlRasten);
+      fsmMaischen.immediateTransitionTo(stateEnterAnzahlRasten);
     }
   } 
   
@@ -35,16 +42,23 @@ void enterEinmaischTemp() {
 
 
 void enterAnzahlRasten() {
-  anzahlRasten += encoder->getValue()-savedEncoderValue;
-  clrScr(false,false);
-  lcd.print("Anzahl Rasten",0,16);
-  lcd.invertText(true);
-  lcd.printNumI(int(anzahlRasten),15,24);
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    anzahlRasten += encoderValue;
+    if(anzahlRasten < 0)
+      anzahlRasten = 0;
+    
+    clrScr(false,false);
+    lcd.print("Anzahl Rasten",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(anzahlRasten),15,24);
+    lcd.invertText(false);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-      aktuelleRast = -1;
       subState = 0;
       if (rastTemp != 0) {
         delete [] rastTemp;
@@ -54,7 +68,13 @@ void enterAnzahlRasten() {
       }
       rastTemp = new int[anzahlRasten];
       rastDauer = new int[anzahlRasten];
-      fsmMaischen.immediateTransitionTo(stateDefineRast);
+      aktuelleRast = 0;
+      rastTemp[aktuelleRast] = einmaischTemp;
+      rastDauer[aktuelleRast] = 30;
+      if(anzahlRasten > 0)
+        fsmMaischen.immediateTransitionTo(stateDefineRast);
+      else
+        fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
     }
   } 
 }
@@ -62,39 +82,42 @@ void enterAnzahlRasten() {
 
 
 void defineRast() {
-  
-  if(aktuelleRast < 0){
-    aktuelleRast = 0;
-    rastTemp[aktuelleRast] = einmaischTemp;
-    rastDauer[aktuelleRast] = 30;
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue; 
+    if(subState == 0 ){
+      rastTemp[aktuelleRast] += encoderValue;
+      if(rastTemp[aktuelleRast] < 0)
+        rastTemp[aktuelleRast] = 0;
+    } else {
+      rastDauer[aktuelleRast] += encoderValue;
+      if(rastDauer[aktuelleRast] < 0)
+        rastDauer[aktuelleRast] = 0;
+    }
+      
+    clrScr(false,false);
+    lcd.printNumI(int(aktuelleRast+1),8,12);
+    lcd.print(". Rast",15+(aktuelleRast>9?7:0),8);
+    lcd.print("Temp :",15,20);
+    lcd.invertText(subState==0);
+    lcd.printNumI(int(rastTemp[aktuelleRast]),57,16);
+    lcd.invertText(false);
+    lcd.print("Dauer:",15,28);
+    lcd.invertText(subState==1);
+    lcd.printNumI(int(rastDauer[aktuelleRast]),57,24);
+    lcd.invertText(false);
   }
-  
-  if(subState == 0 ){
-    rastTemp[aktuelleRast] += encoder->getValue()-savedEncoderValue;
-  } else {
-    rastDauer[aktuelleRast] += (encoder->getValue()-savedEncoderValue);
-  }
-    
-  clrScr(false,false);
-  lcd.printNumI(int(aktuelleRast+1),8,12);
-  lcd.print(". Rast",15+(aktuelleRast>9?7:0),12);
-  lcd.print("Temp :",15,20);
-  lcd.invertText(subState==0);
-  lcd.printNumI(int(rastTemp[aktuelleRast]),57,20);
-  lcd.invertText(false);
-  lcd.print("Dauer:",15,28);
-  lcd.invertText(subState==1);
-  lcd.printNumI(int(rastDauer[aktuelleRast]),57,28);
-  lcd.invertText(false);
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
       if(subState == 0 ){
         subState = 1;
+        storeEncoderValue();
       } else {
         subState = 0;
         aktuelleRast += 1;
+        storeEncoderValue();
         if(aktuelleRast >= anzahlRasten){
           fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
         } else {
@@ -107,12 +130,20 @@ void defineRast() {
 }
 
 void enterAbmaischTemp() {
-  
-  abmaischTemp += encoder->getValue()-savedEncoderValue;
-  clrScr(false,false);
-  lcd.print("Abmaischtmp",0,16);
-  lcd.printNumI(int(abmaischTemp),15,24);
-  lcd.print("~C",29,24);
+  encoderValue += encoder->getValue()-lastEncoderValue;
+  if(encoderValue != lastEncoderValue){
+    lastEncoderValue = encoderValue;
+    abmaischTemp += encoderValue;  
+    if(abmaischTemp < 0)
+      abmaischTemp = 0;
+    
+    clrScr(false,false);
+    lcd.print("Abmaischtmp",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(abmaischTemp),15,24);
+    lcd.invertText(false);
+    lcd.print("~C",29,24);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
@@ -124,6 +155,7 @@ void enterAbmaischTemp() {
 
 void enterDoMaischen() {
   fsmMaischeProzess.immediateTransitionTo(stateReachEinmaischTemp);
+  sollTemp = MIN_TEMP;
 }
 
 void doMaischen() {
@@ -131,43 +163,50 @@ void doMaischen() {
 }
 
 void reachEinmaischTemp() {
-  sollTemp = einmaischTemp;
-  
-  clrScr(false,false);
-  
-  lcd.print("Warte auf", CENTER, 16);
-  lcd.print("Einmaischtemp", CENTER, 24);
-  String s = "";
-  s += einmaischTemp;
-  s += "~ C";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 32);
-  
+  if(sollTemp == MIN_TEMP){
+    sollTemp = einmaischTemp;
+    
+    clrScr(false,false);
+    
+    lcd.print("Warte auf", CENTER, 8);
+    lcd.print("Einmaischtemp", CENTER, 16);
+    String s = "";
+    s += einmaischTemp;
+    s += "~ C";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+  }
   if(temp >= einmaischTemp){
-    aktuelleRast = 1;
-    fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+    aktuelleRast = 0;
+    sollTemp == MIN_TEMP;
+    if(anzahlRasten > 0)
+      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+    else 
+      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
   }
   
 }
 
 void reachRastTemp() {
-  sollTemp = rastTemp[aktuelleRast];
-  
-  clrScr(false,false);
-  
-  lcd.print("Warte auf", CENTER, 16);
-  String s = "";
-  s += aktuelleRast;
-  s += ". Rast Temp";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 24);
-  s = "";
-  s += rastTemp[aktuelleRast];
-  s += "~ C";
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 32);
+  if(sollTemp==MIN_TEMP){
+    sollTemp = rastTemp[aktuelleRast];
+    
+    clrScr(false,false);
+    
+    lcd.print("Warte auf", CENTER, 8);
+    String s = "";
+    s += aktuelleRast+1;
+    s += ". Rast Temp";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 16);
+    s = "";
+    s += rastTemp[aktuelleRast];
+    s += "~ C";
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+  }
   
   if(temp >= rastTemp[aktuelleRast]){
     fsmMaischeProzess.immediateTransitionTo(stateWaitRastDauer);
@@ -175,33 +214,42 @@ void reachRastTemp() {
 }
 
 void prepareRastDauer() {
-  lastRest = -1;
-  storedSystemMillies = millies();
-  dauer = rastDauer[aktuelleRast]*60*1000;
+  lastRest = MAX_LONG;
+  storedSystemMillis = millis();
+  dauer = rastDauer[aktuelleRast]*60*1000L;
 }
 
 void waitRastDauer() {
-  int rest = dauer - (millies()-storedSystemMillies);
+  long rest = dauer - (millis()-storedSystemMillis);
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
   if(lastRest-rest > 1000){
+    Serial.print("Rest: ");
+    Serial.println(rest);
     lastRest = rest;
-    int min = (rest/1000) / 60;
-    int sec = (rest/1000) % 60;
+    long min = (rest/1000) / 60;
+    long sec = (rest/1000) % 60;
+    
+    Serial.print("Min:");
+    Serial.print(min);
+    Serial.print(" Sec: ");
+    Serial.println(sec);
   
+    clrScr(false,false);
     String s = "";
-    s += aktuelleRast;
+    s += aktuelleRast+1;
     s += ". Rast:";
     char buf[14];
     s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 16);
+    lcd.print(buf, CENTER, 8);
+    
     s = "";
     s += rastTemp[aktuelleRast];
-    s += "~ C / ";
+    s += "~C / ";
     s += rastDauer[aktuelleRast];
     s += "min";
     s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    lcd.print(buf, CENTER, 16);
     
     s = "noch ";
     s += min < 10 ? "0":"";
@@ -211,35 +259,38 @@ void waitRastDauer() {
     s += sec;
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 24);
+    Serial.println(buf);
   }
+  
   if(rest <= 0){
-    if(anzahlRasten > aktuelleRast){
+    sollTemp = MIN_TEMP;
+    if(anzahlRasten > aktuelleRast+1){
       aktuelleRast += 1;
-      lastSec = -1;
-      fsmMaischeProzess.immediateTransitionTo(stateWaitRastTemp);
+      lastRest = MAX_LONG;
+      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
     } else {
       fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
     }
   }
 }
 
-void reachAbmaischTemp {
-  
-  sollTemp = abmaischTemp;
-  
-  clrScr(false,false);
-  
-  lcd.print("Warte auf", CENTER, 16);
-  lcd.print("Abmaischtemp", CENTER, 24);
-  String s = "";
-  s += abmaischTemp;
-  s += "~ C";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 32);
-  
+void reachAbmaischTemp() {
+  if(sollTemp == MIN_TEMP){
+    sollTemp = abmaischTemp;
+    
+    clrScr(false,false);
+    
+    lcd.print("Warte auf", CENTER, 8);
+    lcd.print("Abmaischtemp", CENTER, 16);
+    String s = "";
+    s += abmaischTemp;
+    s += "~ C";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 24);
+  }
   if(temp >= abmaischTemp){
-    fsmMain.immediateTransitionTo(menu);
+    fsmMain.immediateTransitionTo(stateMenu);
   }
   
 }

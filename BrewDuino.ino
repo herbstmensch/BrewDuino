@@ -10,24 +10,38 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-#define BG_LIGHT_PIN 7
+#define PIN_ROTARY_1 2
+#define PIN_ROTARY_2 3
+#define PIN_ROTARY_BUTTON 4
+#define PIN_THERMOMETER 7
+#define PIN_BG_LIGHT 5
+#define PIN_HEATER 6
+#define PIN_BUZZER 8
+#define PIN_LCD_SCLK 9
+#define PIN_LCD_MOSI 10
+#define PIN_LCD_DC 11
+#define PIN_LCD_RST 12
+#define PIN_LCD_SCE 13
 
 //Konfigurationsparameter festlegen
-int tempOffset = 1;
+#define TEMP_OFFSET 1
+#define MIN_TEMP -999
+#define MAX_LONG 2147483647L;
 
 //Display einrichten 
-LCD5110 lcd(8, 9, 10, 11, 12);
-//Change in LCD5110 lcd(9,10,11,12,13);
+//Old LCD5110 lcd(8, 9, 10, 11, 12);
+LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
 
 //Encoder einrichten;
 #define ENC_HALFSTEP
 ClickEncoder *encoder;
-int16_t lastEncoderValue, encoderValue, savedEncoderValue;
+int16_t lastEncoderValue, encoderValue;
 
 //Temperatursensor DS1820 Initialisierung
-OneWire oneWire(5);
+OneWire oneWire(PIN_THERMOMETER);
 DallasTemperature sensors(&oneWire);
+DeviceAddress thermometer;
 
 //Main FSM und States definieren
 State stateMenu = State(enterMenu, menu, leaveMenu);
@@ -63,17 +77,20 @@ float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp;
 int lastReadIndex=0;
 
-int lastRest = -1;
+long lastRest = -1;
 long dauer = 0;
-long storedSystemMillies = 0;
+long storedSystemMillis = 0;
+long lastTempMillis;
 
 bool isHeating;
 
 void setup()   {
   Serial.begin(9600);
   
-  pinMode(BG_LIGHT_PIN, OUTPUT);
-  digitalWrite(BG_LIGHT_PIN, LOW);
+  pinMode(PIN_BG_LIGHT, OUTPUT);
+  pinMode(PIN_HEATER, OUTPUT);
+  digitalWrite(PIN_BG_LIGHT, LOW);
+  digitalWrite(PIN_HEATER, HIGH);
   
   //LCD Setup 
   lcd.InitLCD();
@@ -85,7 +102,7 @@ void setup()   {
   lcd.print(COPYRIGHT2, 42, 40);
   
   //Encoder und Interrupt Setup
-  encoder = new ClickEncoder(2, 3, 4, 4);
+  encoder = new ClickEncoder(PIN_ROTARY_1, PIN_ROTARY_2, PIN_ROTARY_BUTTON, 4);
   encoder->setAccelerationEnabled(false);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr); 
@@ -97,6 +114,9 @@ void setup()   {
   
   //Temperatursensor initialisieren
   sensors.begin();
+  sensors.getAddress(thermometer, 0);
+  // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
+  sensors.setResolution(thermometer, 9);
   //---------------------------------------------------------------
 
   delay(2000);
@@ -114,15 +134,14 @@ void loop() {
   
   readTemperature();
   checkHeatingStatus();
-  
-  addTemperature();
+  addTemperature(false);
 }
 
 void enterMenu(){
   encoder->setAccelerationEnabled(false);
   selectedMenuEntry = 0;
   lastSelectedMenuEntry = -1;
-  sollTemp = 0;
+  sollTemp = MIN_TEMP;
   clrScr(true,false);
   lcd.print(PROG_NAME" "PROG_VERSION, CENTER, 0);
 }
@@ -132,24 +151,26 @@ void leaveMenu(){
 }
 
 void enterMaischen(){
-  //fsmMaischen.immediateTransitionTo();
+  encoder->setAccelerationEnabled(true);
+  fsmMaischen.immediateTransitionTo(stateEnterEinmaischTemp);
   clrScr(true,false);
   lcd.print("--Maischen--",CENTER,0);
 }
 
 void leaveMaischen(){
-  sollTemp = 0;
+  sollTemp = MIN_TEMP;
 }
 
 void enterKochen(){
+  encoder->setAccelerationEnabled(true);
   sollTemp = 100;
-  //fsmMaischen.immediateTransitionTo();
+  fsmKochen.immediateTransitionTo(stateEnterKochzeit);
   clrScr(true,false);
   lcd.print("--Kochen--",CENTER,0);
 }
 
 void leaveKochen(){
-  sollTemp = 0;
+  sollTemp = MIN_TEMP;
 }
 
 /*void enterSettings(){
@@ -158,6 +179,9 @@ void leaveKochen(){
 
 void menu() {
   encoderValue += encoder->getValue();
+    Serial.println(encoder->getValue());
+    Serial.println(encoder->getValue());
+    Serial.println(encoder->getValue());
   if(encoderValue != lastEncoderValue){
     lastEncoderValue = encoderValue;
     Serial.print("Encoder Value: ");
@@ -202,31 +226,43 @@ void kochen(){
 }*/
 
 void storeEncoderValue(){
-  savedEncoderValue = encoderValue;
+  lastEncoderValue = -999;
+  Serial.print("LastEncoderValue: ");
+  Serial.println(lastEncoderValue);
+  //Die Werte dürfen nicht gleich sein, sonst bauen sich die Menüs erst nach veränderung auf.
+  encoderValue = 0;
+  Serial.print("encoderValue: ");
+  Serial.println(encoderValue);
 }
 
 void readTemperature(){
-  //Aktuelle Temperatur lesen.
-  sensors.requestTemperatures(); 
-  lastTemps[lastReadIndex++] = sensors.getTempCByIndex(0);
-  float sum = 0;
-  for(int i = 0; i < 9; i++)
-    sum += lastTemps[i];
+  if(millis()-lastTempMillis > 500){
+    //Aktuelle Temperatur lesen.
+    sensors.requestTemperatures(); 
+    lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
     
-  //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
-  temp = sum / 10;
-  if(lastReadIndex >= 10)
-    lastReadIndex = 0;
+    float sum = 0;
+    for(int i = 0; i < 10; i++)
+      sum += lastTemps[i];
+      
+    //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
+    temp = sum / 10;
+    
+    if(lastReadIndex >= 10)
+      lastReadIndex = 0;
+    
+    lastTempMillis = millis();
+  }
 }
 
 void checkHeatingStatus(){
   //Ein oder ausschalten des Heizelementes.
   //Evtl. schaltfrequent sicherstellen
   if(isHeating){
-    if(temp + tempOffset >= sollTemp)
+    if(temp >= sollTemp + TEMP_OFFSET)
       turnOffHeating();
   } else {
-     if(temp + tempOffset <= sollTemp)
+     if(temp - TEMP_OFFSET <= sollTemp - TEMP_OFFSET)
       turnOnHeating();
   }
 }
@@ -234,16 +270,20 @@ void checkHeatingStatus(){
 void turnOffHeating(){
   //Toggle Relais
   isHeating = false;
+  digitalWrite(PIN_HEATER,HIGH);
+  addTemperature(true);
 }
 
 void turnOnHeating(){
   //Toggle Relais
   isHeating = true;
+  digitalWrite(PIN_HEATER,LOW);
+  addTemperature(true);
 }
 
-void addTemperature() {
+void addTemperature(boolean force) {
   //Wenn die aktuelle Temperatur nciht der angezeigten entspricht, aktualisieren.
-  //if(temp != lastTemp){
+  if(temp != lastTemp || force){
     lastTemp = temp;
     lcd.clrRow(5);
     String s = (isHeating ? "H " : "");
@@ -253,11 +293,10 @@ void addTemperature() {
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, RIGHT, 40);
- // }
+  }
 }
 
 void clrScr(bool clearFirst, bool clearLast){
-  Serial.print("dd");
   if(clearFirst && clearLast){
     lcd.clrScr();
     return;
