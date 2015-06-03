@@ -24,11 +24,12 @@ void enterEinmaischTemp() {
       einmaischTemp = 0;
  
     clrScr(false,false);
-    lcd.print("Einmaischtmp",0,16);
+    lcd.print("Einmaisch-.",0,16);
+    lcd.print("Temp.: ",0,24);
     lcd.invertText(true);
-    lcd.printNumI(int(einmaischTemp),15,24);
+    lcd.printNumI(int(einmaischTemp),49,24);
     lcd.invertText(false);
-    lcd.print("~C",29,24);
+    lcd.print("~ C",70,24);
   }
   
   ClickEncoder::Button b = encoder->getButton();
@@ -100,11 +101,11 @@ void defineRast() {
     clrScr(false,false);
     lcd.printNumI(int(aktuelleRast+1),8,12);
     lcd.print(". Rast",15+(aktuelleRast>9?7:0),8);
-    lcd.print("Temp :",15,20);
+    lcd.print("Temp:",15,20);
     lcd.invertText(subState==0);
     lcd.printNumI(int(rastTemp[aktuelleRast]),57,16);
     lcd.invertText(false);
-    lcd.print("Dauer:",15,28);
+    lcd.print("Dauer:",15,24);
     lcd.invertText(subState==1);
     lcd.printNumI(int(rastDauer[aktuelleRast]),57,24);
     lcd.invertText(false);
@@ -139,11 +140,12 @@ void enterAbmaischTemp() {
       abmaischTemp = 0;
     
     clrScr(false,false);
-    lcd.print("Abmaischtmp",0,16);
+    lcd.print("Abmaisch-",0,16);
+    lcd.print("Temp: ",0,24);
     lcd.invertText(true);
-    lcd.printNumI(int(abmaischTemp),15,24);
+    lcd.printNumI(int(abmaischTemp),49,24);
     lcd.invertText(false);
-    lcd.print("~C",29,24);
+    lcd.print("~ C",70,24);
   }
   
   ClickEncoder::Button b = encoder->getButton();
@@ -199,7 +201,7 @@ void reachRastTemp() {
     lcd.print("Warte auf", CENTER, 8);
     String s = "";
     s += aktuelleRast+1;
-    s += ". Rast Temp";
+    s += ". Rast Temp.";
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
@@ -226,16 +228,9 @@ void waitRastDauer() {
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
   if(lastRest-rest > 1000){
-    Serial.print("Rest: ");
-    Serial.println(rest);
     lastRest = rest;
     long min = (rest/1000) / 60;
     long sec = (rest/1000) % 60;
-    
-    Serial.print("Min:");
-    Serial.print(min);
-    Serial.print(" Sec: ");
-    Serial.println(sec);
   
     clrScr(false,false);
     String s = "";
@@ -247,7 +242,7 @@ void waitRastDauer() {
     
     s = "";
     s += rastTemp[aktuelleRast];
-    s += "~C / ";
+    s += "~ C / ";
     s += rastDauer[aktuelleRast];
     s += "min";
     s.toCharArray(buf,14);
@@ -261,7 +256,6 @@ void waitRastDauer() {
     s += sec;
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 24);
-    Serial.println(buf);
   }
   
   if(rest <= 0){
@@ -283,7 +277,7 @@ void reachAbmaischTemp() {
     clrScr(false,false);
     
     lcd.print("Warte auf", CENTER, 8);
-    lcd.print("Abmaischtemp", CENTER, 16);
+    lcd.print("Abmaischtemp.", CENTER, 16);
     String s = "";
     s += abmaischTemp;
     s += "~ C";
