@@ -10,12 +10,13 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+//Pins benennen
 #define PIN_ROTARY_1 2
 #define PIN_ROTARY_2 3
 #define PIN_ROTARY_BUTTON 4
-#define PIN_THERMOMETER 7
 #define PIN_BG_LIGHT 5
 #define PIN_HEATER 6
+#define PIN_THERMOMETER 7
 #define PIN_BUZZER 8
 #define PIN_LCD_SCLK 9
 #define PIN_LCD_MOSI 10
@@ -28,6 +29,7 @@
 #define MIN_TEMP -999
 #define MAX_LONG 2147483647L;
 #define TEMP_ARRAY_SIZE 5
+#define ENC_HALFSTEP
 
 //Display einrichten 
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
@@ -35,8 +37,6 @@ LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
 
 //Encoder einrichten;
-#define ENC_HALFSTEP 2
-#define ENC_DECODER (1 << 1)
 ClickEncoder *encoder;
 int16_t lastEncoderValue, encoderValue;
 
@@ -66,12 +66,6 @@ State stateEnterAnzahlHopfengaben = State(forceFirstDisplay, enterAnzahlHopfenga
 State stateDefineHopfengaben = State(forceFirstDisplay, defineHopfengaben, NULL);
 State stateDoKochen = State(enterDoKochen,doKochen, NULL);
 FSM fsmKochen = FSM(stateEnterKochzeit);
-
-/* 
-//Settings FSM und States definieren
-State enterEinmaischTemp;
-FSM fsmSettings = FSM(enterEinmaischTemp);
-*/
 
 //Variablen initialisieren
 int selectedMenuEntry, lastSelectedMenuEntry;
@@ -104,8 +98,6 @@ void setup()   {
   digitalWrite(PIN_BG_LIGHT, LOW);
   digitalWrite(PIN_HEATER, HIGH);
   
-  
-  
   //Encoder und Interrupt Setup
   encoder = new ClickEncoder(PIN_ROTARY_1, PIN_ROTARY_2, PIN_ROTARY_BUTTON, 4);
   encoder->setAccelerationEnabled(false);
@@ -127,7 +119,7 @@ void setup()   {
     readTemperature(true);
   //---------------------------------------------------------------
 
-  //delay(2000);
+  delay(2000);
 }
 
 void loop() {
