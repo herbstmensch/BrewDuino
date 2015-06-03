@@ -27,6 +27,7 @@
 #define TEMP_OFFSET 1
 #define MIN_TEMP -999
 #define MAX_LONG 2147483647L;
+#define TEMP_ARRAY_SIZE 5
 
 //Display einrichten 
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
@@ -34,7 +35,8 @@ LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
 
 //Encoder einrichten;
-#define ENC_HALFSTEP
+#define ENC_HALFSTEP 2
+#define ENC_DECODER (1 << 1)
 ClickEncoder *encoder;
 int16_t lastEncoderValue, encoderValue;
 
@@ -51,18 +53,18 @@ State stateKochen = State(enterKochen, kochen, leaveKochen);
 FSM fsmMain = FSM(stateMenu);
 
 //Maischen FSM und States definieren
-State stateEnterEinmaischTemp = State(storeEncoderValue,enterEinmaischTemp,NULL);
-State stateEnterAnzahlRasten = State(storeEncoderValue,enterAnzahlRasten,NULL);
-State stateDefineRast = State(storeEncoderValue,defineRast,NULL);
-State stateEnterAbmaischTemp = State(storeEncoderValue,enterAbmaischTemp,NULL);
+State stateEnterEinmaischTemp = State(forceFirstDisplay, enterEinmaischTemp, NULL);
+State stateEnterAnzahlRasten = State(forceFirstDisplay, enterAnzahlRasten, NULL);
+State stateDefineRast = State(forceFirstDisplay, defineRast, NULL);
+State stateEnterAbmaischTemp = State(forceFirstDisplay, enterAbmaischTemp, NULL);
 State stateDoMaischen = State(enterDoMaischen, doMaischen,NULL);
 FSM fsmMaischen = FSM(stateEnterEinmaischTemp);
 
 //Kochen FSM und States definieren
-State stateEnterKochzeit = State(storeEncoderValue,enterKochzeit,NULL);
-State stateEnterAnzahlHopfengaben = State(storeEncoderValue,enterAnzahlHopfengaben,NULL);
-State stateDefineHopfengaben = State(storeEncoderValue,defineHopfengaben,NULL);
-State stateDoKochen = State(enterDoKochen,doKochen,NULL);
+State stateEnterKochzeit = State(forceFirstDisplay, enterKochzeit, NULL);
+State stateEnterAnzahlHopfengaben = State(forceFirstDisplay, enterAnzahlHopfengaben, NULL);
+State stateDefineHopfengaben = State(forceFirstDisplay, defineHopfengaben, NULL);
+State stateDoKochen = State(enterDoKochen,doKochen, NULL);
 FSM fsmKochen = FSM(stateEnterKochzeit);
 
 /* 
@@ -82,16 +84,10 @@ long dauer = 0;
 long storedSystemMillis = 0;
 long lastTempMillis;
 
+bool first = false;
 bool isHeating;
 
 void setup()   {
-  Serial.begin(9600);
-  
-  pinMode(PIN_BG_LIGHT, OUTPUT);
-  pinMode(PIN_HEATER, OUTPUT);
-  digitalWrite(PIN_BG_LIGHT, LOW);
-  digitalWrite(PIN_HEATER, HIGH);
-  
   //LCD Setup 
   lcd.InitLCD();
   lcd.clrScr();
@@ -100,6 +96,15 @@ void setup()   {
   lcd.print(PROG_NAME" "PROG_VERSION, LEFT, 16);
   lcd.print(COPYRIGHT, LEFT, 32);
   lcd.print(COPYRIGHT2, 42, 40);
+  
+  Serial.begin(9600);
+  
+  pinMode(PIN_BG_LIGHT, OUTPUT);
+  pinMode(PIN_HEATER, OUTPUT);
+  digitalWrite(PIN_BG_LIGHT, LOW);
+  digitalWrite(PIN_HEATER, HIGH);
+  
+  
   
   //Encoder und Interrupt Setup
   encoder = new ClickEncoder(PIN_ROTARY_1, PIN_ROTARY_2, PIN_ROTARY_BUTTON, 4);
@@ -117,9 +122,12 @@ void setup()   {
   sensors.getAddress(thermometer, 0);
   // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
   sensors.setResolution(thermometer, 9);
+  //Init Temp array
+  for(int i = 0; i < TEMP_ARRAY_SIZE; i++)  
+    readTemperature(true);
   //---------------------------------------------------------------
 
-  delay(2000);
+  //delay(2000);
 }
 
 void loop() {
@@ -132,7 +140,7 @@ void loop() {
     }
   } 
   
-  readTemperature();
+  readTemperature(false);
   checkHeatingStatus();
   addTemperature(false);
 }
@@ -144,6 +152,7 @@ void enterMenu(){
   sollTemp = MIN_TEMP;
   clrScr(true,false);
   lcd.print(PROG_NAME" "PROG_VERSION, CENTER, 0);
+  first = true;
 }
 
 void leaveMenu(){
@@ -178,21 +187,13 @@ void leaveKochen(){
 }*/
 
 void menu() {
-  encoderValue += encoder->getValue();
-    Serial.println(encoder->getValue());
-    Serial.println(encoder->getValue());
-    Serial.println(encoder->getValue());
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
-    Serial.print("Encoder Value: ");
-    Serial.println(encoderValue);
-    selectedMenuEntry = (encoderValue*encoderValue)%2;
-    Serial.print("Entry: ");
-    Serial.println(selectedMenuEntry);
-  }
+  encoderValue = encoder->getValue();
   
-  if(selectedMenuEntry != lastSelectedMenuEntry){
-    lastSelectedMenuEntry = selectedMenuEntry;
+  if(encoderValue != 0 || first){
+    first = false;
+    selectedMenuEntry -= encoderValue;
+    if(selectedMenuEntry > 1) selectedMenuEntry = 1;
+    if(selectedMenuEntry < 0) selectedMenuEntry = 0;
     clrScr(false,false);
     lcd.print("=>", 10, 16+selectedMenuEntry*8);
     lcd.print("Maischen", 25, 16);
@@ -225,30 +226,20 @@ void kochen(){
   fsmSettings.update();
 }*/
 
-void storeEncoderValue(){
-  lastEncoderValue = -999;
-  Serial.print("LastEncoderValue: ");
-  Serial.println(lastEncoderValue);
-  //Die Werte dürfen nicht gleich sein, sonst bauen sich die Menüs erst nach veränderung auf.
-  encoderValue = 0;
-  Serial.print("encoderValue: ");
-  Serial.println(encoderValue);
-}
-
-void readTemperature(){
-  if(millis()-lastTempMillis > 500){
+void readTemperature(bool force){
+  if(millis()-lastTempMillis > 500 || force){
     //Aktuelle Temperatur lesen.
     sensors.requestTemperatures(); 
     lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
     
     float sum = 0;
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < TEMP_ARRAY_SIZE; i++)
       sum += lastTemps[i];
       
     //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
-    temp = sum / 10;
+    temp = sum / TEMP_ARRAY_SIZE;
     
-    if(lastReadIndex >= 10)
+    if(lastReadIndex >= TEMP_ARRAY_SIZE)
       lastReadIndex = 0;
     
     lastTempMillis = millis();
@@ -315,4 +306,8 @@ void clrScr(bool clearFirst, bool clearLast){
 
 void timerIsr() {
   encoder->service();
+}
+
+void forceFirstDisplay(){
+  first = true;
 }

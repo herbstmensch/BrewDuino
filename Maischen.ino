@@ -16,9 +16,9 @@ FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
 
 void enterEinmaischTemp() {
   
-  encoderValue += encoder->getValue();
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     einmaischTemp += encoderValue;  
     if(einmaischTemp < 0)
       einmaischTemp = 0;
@@ -42,9 +42,9 @@ void enterEinmaischTemp() {
 
 
 void enterAnzahlRasten() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     anzahlRasten += encoderValue;
     if(anzahlRasten < 0)
       anzahlRasten = 0;
@@ -59,20 +59,22 @@ void enterAnzahlRasten() {
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-      subState = 0;
-      if (rastTemp != 0) {
-        delete [] rastTemp;
-      }
-      if (rastDauer != 0) {
-        delete [] rastDauer;
-      }
-      rastTemp = new int[anzahlRasten];
-      rastDauer = new int[anzahlRasten];
-      aktuelleRast = 0;
-      rastTemp[aktuelleRast] = einmaischTemp;
-      rastDauer[aktuelleRast] = 30;
-      if(anzahlRasten > 0)
+      if(anzahlRasten > 0){
+        subState = 0;
+        if (rastTemp != 0) {
+          delete [] rastTemp;
+        }
+        if (rastDauer != 0) {
+          delete [] rastDauer;
+        }
+        rastTemp = new int[anzahlRasten];
+        rastDauer = new int[anzahlRasten];
+        aktuelleRast = 0;
+        rastTemp[aktuelleRast] = einmaischTemp;
+        rastDauer[aktuelleRast] = 30;
+        
         fsmMaischen.immediateTransitionTo(stateDefineRast);
+      }
       else
         fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
     }
@@ -82,9 +84,9 @@ void enterAnzahlRasten() {
 
 
 void defineRast() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue; 
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     if(subState == 0 ){
       rastTemp[aktuelleRast] += encoderValue;
       if(rastTemp[aktuelleRast] < 0)
@@ -113,11 +115,10 @@ void defineRast() {
     if( b == ClickEncoder::Clicked ){
       if(subState == 0 ){
         subState = 1;
-        storeEncoderValue();
+        first = true;
       } else {
         subState = 0;
         aktuelleRast += 1;
-        storeEncoderValue();
         if(aktuelleRast >= anzahlRasten){
           fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
         } else {
@@ -130,9 +131,9 @@ void defineRast() {
 }
 
 void enterAbmaischTemp() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     abmaischTemp += encoderValue;  
     if(abmaischTemp < 0)
       abmaischTemp = 0;
@@ -178,10 +179,11 @@ void reachEinmaischTemp() {
     lcd.print(buf, CENTER, 24);
   }
   if(temp >= einmaischTemp){
-    aktuelleRast = 0;
-    sollTemp == MIN_TEMP;
-    if(anzahlRasten > 0)
+    sollTemp = MIN_TEMP;
+    if(anzahlRasten > 0){
+      aktuelleRast = 0;
       fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+    }
     else 
       fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
   }

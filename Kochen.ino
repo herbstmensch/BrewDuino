@@ -8,9 +8,9 @@ State stateWaitKochDauer = State(prepareKochDauer,waitKochDauer,NULL);
 FSM fsmKochProzess = FSM(stateReachKochTemp);
 
 void enterKochzeit() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     kochzeit += encoderValue;
     if(kochzeit < 1)
       kochzeit = 1;
@@ -32,9 +32,9 @@ void enterKochzeit() {
 }
 
 void enterAnzahlHopfengaben() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     anzahlHopfengaben += encoderValue;
     if(anzahlHopfengaben < 0)
       anzahlHopfengaben = 0;
@@ -49,15 +49,16 @@ void enterAnzahlHopfengaben() {
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-      aktuelleHopfengabe= -1;
-      if (hopfengaben != 0) {
-        delete [] hopfengaben;
-      }
-      hopfengaben = new int[anzahlHopfengaben];
-      aktuelleHopfengabe = 0;
-      hopfengaben[aktuelleHopfengabe] = 20;
-      if(anzahlHopfengaben > 0)
+      first = true;
+      if(anzahlHopfengaben > 0){
+        if (hopfengaben != 0) {
+          delete [] hopfengaben;
+        }
+        hopfengaben = new int[anzahlHopfengaben];
+        aktuelleHopfengabe = 0;
+        hopfengaben[aktuelleHopfengabe] = 20;
         fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
+      }
       else
         fsmKochen.immediateTransitionTo(stateDoKochen);
     }
@@ -65,9 +66,9 @@ void enterAnzahlHopfengaben() {
 }
 
 void defineHopfengaben() {
-  encoderValue += encoder->getValue()-lastEncoderValue;
-  if(encoderValue != lastEncoderValue){
-    lastEncoderValue = encoderValue;
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
     hopfengaben[aktuelleHopfengabe] += encoderValue;  
     
     clrScr(false,false);
@@ -84,7 +85,7 @@ void defineHopfengaben() {
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
         aktuelleHopfengabe += 1;
-        if(aktuelleHopfengabe >= anzahlHopfengaben){
+        if(aktuelleHopfengabe+1 >= anzahlHopfengaben){
           fsmKochen.immediateTransitionTo(stateDoKochen);
         } else {
           hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1];
@@ -94,6 +95,8 @@ void defineHopfengaben() {
 }
 
 void enterDoKochen() {
+  Serial.println("Kochen");
+  first = true;
   fsmKochProzess.immediateTransitionTo(stateReachKochTemp);
 }
 
@@ -102,16 +105,19 @@ void doKochen() {
 }
 
 void reachKochTemp() {
-  clrScr(false,false);
-  
-  lcd.print("Warte auf", CENTER, 16);
-  lcd.print("Kochtemp.", CENTER, 24);
-  String s = "";
-  s += sollTemp;
-  s += "~ C";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 32);
+  if(first){
+    first = false;
+    clrScr(false,false);
+    
+    lcd.print("Warte auf", CENTER, 16);
+    lcd.print("Kochtemp.", CENTER, 24);
+    String s = "";
+    s += sollTemp;
+    s += "~ C";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 32);
+  }
   
   if(temp >= sollTemp){
     fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
@@ -120,26 +126,32 @@ void reachKochTemp() {
 }
 
 void prepareKochDauer() {
-  lastRest = -1;
+  lastRest = MAX_LONG;
   storedSystemMillis = millis();
-  dauer = kochzeit*60*1000;
+  dauer = kochzeit*60*1000L;
 }
 
 void waitKochDauer() {
-  int rest = dauer - (millis()-storedSystemMillis);
+  long rest = dauer - (millis()-storedSystemMillis);
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
   if(lastRest-rest > 1000){
     lastRest = rest;
-    int min = (rest/1000) / 60;
-    int sec = (rest/1000) % 60;
+    long std = ((rest/1000) / 60) / 60;
+    long min = ((rest/1000) / 60) % 60;
+    long sec = (rest/1000) % 60;
   
+    clrScr(false,false);
     String s = "Kochen:";
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
     
     s = "noch ";
+    if(kochzeit > 60){
+      s += std;
+      s += ":";
+    }
     s += min < 10 ? "0":"";
     s += min;
     s += ":";
