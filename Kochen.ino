@@ -16,7 +16,7 @@ void enterKochzeit() {
       kochzeit = 1;
   
     clrScr(false,false);
-    lcd.print("Kochzeit",0,16);
+    lcd.print("Kochzeit:",0,16);
     lcd.invertText(true);
     lcd.printNumI(int(kochzeit),15,24);
     lcd.invertText(false);
@@ -95,7 +95,6 @@ void defineHopfengaben() {
 }
 
 void enterDoKochen() {
-  Serial.println("Kochen");
   first = true;
   fsmKochProzess.immediateTransitionTo(stateReachKochTemp);
 }
@@ -142,10 +141,7 @@ void waitKochDauer() {
     long sec = (rest/1000) % 60;
   
     clrScr(false,false);
-    String s = "Kochen:";
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 16);
+    lcd.print("Kochen:", CENTER, 16);
     
     s = "noch ";
     if(kochzeit > 60){
