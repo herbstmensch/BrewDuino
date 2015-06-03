@@ -30,6 +30,7 @@
 #define MAX_LONG 2147483647L;
 #define TEMP_ARRAY_SIZE 5
 #define ENC_HALFSTEP
+#define SERIAL N
 
 //Display einrichten 
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
@@ -91,7 +92,9 @@ void setup()   {
   lcd.print(COPYRIGHT, LEFT, 32);
   lcd.print(COPYRIGHT2, RIGHT, 40);
   
-  Serial.begin(9600);
+  #if SERIAL != "N"
+    Serial.begin(9600);
+  #endif
   
   pinMode(PIN_BG_LIGHT, OUTPUT);
   pinMode(PIN_HEATER, OUTPUT);
