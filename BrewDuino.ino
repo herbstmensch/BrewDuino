@@ -1,8 +1,8 @@
 #define CREATOR "Herbstmensch"
 #define PROG_NAME "BrewDuino"
 #define PROG_VERSION "v0.1"
-#define COPYRIGHT "(c) 2015 Tim"
-#define COPYRIGHT2 "Herbst"
+#define COPYRIGHT "(c) 2015 - "
+#define COPYRIGHT2 "Tim Herbst"
 #include <LCD5110_Basic.h>
 #include <ClickEncoder.h>
 #include <TimerOne.h>
@@ -95,7 +95,7 @@ void setup()   {
   lcd.print(CREATOR, LEFT, 0);
   lcd.print(PROG_NAME" "PROG_VERSION, LEFT, 16);
   lcd.print(COPYRIGHT, LEFT, 32);
-  lcd.print(COPYRIGHT2, 42, 40);
+  lcd.print(COPYRIGHT2, RIGHT, 40);
   
   Serial.begin(9600);
   
