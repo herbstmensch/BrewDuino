@@ -146,11 +146,11 @@ void waitKochDauer() {
     s = "noch ";
     if(kochzeit > 60){
       s += std;
-      s += ":";
+      s += sec%2==0?":":" ";
     }
     s += min < 10 ? "0":"";
     s += min;
-    s += ":";
+    s += sec%2==0?":":" ";
     s += sec < 10 ? "0":"";
     s += sec;
     s.toCharArray(buf,14);
