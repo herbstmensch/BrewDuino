@@ -1,5 +1,5 @@
 # BrewDuino
-BrewDuino ist eine einfache Steuerungssoftware für Hobbybrauer.
+BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 
 Unterstützt werden der Maische und Kochprozess durch:
 * automatische Temperaturregelung (nach eingegebenem Plan),
