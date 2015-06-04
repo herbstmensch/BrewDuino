@@ -92,7 +92,7 @@ void setup()   {
   lcd.print(COPYRIGHT, LEFT, 32);
   lcd.print(COPYRIGHT2, RIGHT, 40);
   
-  #if SERIAL != "N"
+  #if SERIAL != N
     Serial.begin(9600);
   #endif
   

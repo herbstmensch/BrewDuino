@@ -8,6 +8,7 @@ int aktuelleRast = 0;
 int subState = 0;
 
 State stateReachEinmaischTemp = State(reachEinmaischTemp);
+State stateEinmaischen = State(einmaischen);
 State stateReachRastTemp = State(reachRastTemp);
 State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
 State stateReachAbmaischTemp = State(reachAbmaischTemp);
@@ -120,6 +121,7 @@ void defineRast() {
       } else {
         subState = 0;
         aktuelleRast += 1;
+        first = true;
         if(aktuelleRast >= anzahlRasten){
           fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
         } else {
@@ -184,12 +186,33 @@ void reachEinmaischTemp() {
     sollTemp = MIN_TEMP;
     if(anzahlRasten > 0){
       aktuelleRast = 0;
-      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+      fsmMaischeProzess.immediateTransitionTo(stateEinmaischen);
     }
     else 
       fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
   }
   
+}
+
+
+void einmaischen() {
+  if(sollTemp==MIN_TEMP){
+    sollTemp = 0;
+    
+    clrScr(false,false);
+    
+    lcd.print("Einmaischen", CENTER, 8);
+    lcd.print("Weiter mit", CENTER, 16);
+    lcd.print("Klick", CENTER, 24);
+  }
+  
+  ClickEncoder::Button b = encoder->getButton();
+  if (b != ClickEncoder::Open) {
+    if( b == ClickEncoder::Clicked ){
+      sollTemp = MIN_TEMP;
+      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+    }
+  } 
 }
 
 void reachRastTemp() {
@@ -229,7 +252,8 @@ void waitRastDauer() {
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
   if(lastRest-rest > 1000){
     lastRest = rest;
-    long min = (rest/1000) / 60;
+    long std = ((rest/1000) / 60) / 60;
+    long min = ((rest/1000) / 60) % 60;
     long sec = (rest/1000) % 60;
   
     clrScr(false,false);

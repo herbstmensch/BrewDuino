@@ -143,7 +143,7 @@ void waitKochDauer() {
     clrScr(false,false);
     lcd.print("Kochen:", CENTER, 16);
     
-    s = "noch ";
+    String s = "noch ";
     if(kochzeit > 60){
       s += std;
       s += sec%2==0?":":" ";
@@ -153,6 +153,7 @@ void waitKochDauer() {
     s += sec%2==0?":":" ";
     s += sec < 10 ? "0":"";
     s += sec;
+    char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 24);
   }
