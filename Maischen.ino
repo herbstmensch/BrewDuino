@@ -185,7 +185,6 @@ void reachEinmaischTemp() {
   if(temp >= einmaischTemp){
     sollTemp = MIN_TEMP;
     if(anzahlRasten > 0){
-      aktuelleRast = 0;
       fsmMaischeProzess.immediateTransitionTo(stateEinmaischen);
     }
     else 
@@ -197,7 +196,9 @@ void reachEinmaischTemp() {
 
 void einmaischen() {
   if(sollTemp==MIN_TEMP){
-    sollTemp = 0;
+    //Temperatur ändern um Display reload zu verhindern
+    //Wert sollte so klein sein, dass nicht geheizt wird.
+    sollTemp = MIN_TEMP+1;
     
     clrScr(false,false);
     
@@ -210,6 +211,7 @@ void einmaischen() {
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
       sollTemp = MIN_TEMP;
+      aktuelleRast = 0;
       fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
     }
   } 
