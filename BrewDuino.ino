@@ -71,7 +71,7 @@ FSM fsmKochen = FSM(stateEnterKochzeit);
 //Variablen initialisieren
 int selectedMenuEntry, lastSelectedMenuEntry;
 float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
-int temp, lastTemp, sollTemp;
+int temp, lastTemp, sollTemp, lastHeatCheckTemp;
 int lastReadIndex=0;
 
 long lastRest = -1;
@@ -222,7 +222,7 @@ void kochen(){
 }*/
 
 void readTemperature(bool force){
-  if(millis()-lastTempMillis > 500 || force){
+  if(millis()-lastTempMillis > 1000 || force){
     //Aktuelle Temperatur lesen.
     sensors.requestTemperatures(); 
     lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
@@ -242,14 +242,17 @@ void readTemperature(bool force){
 }
 
 void checkHeatingStatus(){
-  //Ein oder ausschalten des Heizelementes.
-  //Evtl. schaltfrequent sicherstellen
-  if(isHeating){
-    if(temp >= sollTemp + TEMP_OFFSET)
-      turnOffHeating();
-  } else {
-     if(temp - TEMP_OFFSET <= sollTemp - TEMP_OFFSET)
-      turnOnHeating();
+  if(temp != lastHeatCheckTemp){
+    lastHeatCheckTemp = temp;
+    //Ein oder ausschalten des Heizelementes.
+    //Evtl. schaltfrequent sicherstellen
+    if(isHeating){
+      if(temp >= sollTemp + TEMP_OFFSET)
+        turnOffHeating();
+    } else {
+       if(temp - TEMP_OFFSET <= sollTemp - TEMP_OFFSET)
+        turnOnHeating();
+    }
   }
 }
 
