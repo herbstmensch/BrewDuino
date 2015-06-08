@@ -176,6 +176,7 @@ void waitKochDauer() {
       long verstrichen = (millis()-storedSystemMillis);
       if(verstrichen > hg){
         alertedHopfengaben += 1;
+        first = true;
          fsmKochProzess.immediateTransitionTo(stateAlertHopfengabe);
       }
     }
@@ -188,15 +189,25 @@ void waitKochDauer() {
 }
 
 void alertHopfengabe(){
-  alarm();
-  clrScr(false, false);
-  String s = (alertedHopfengaben+1);
-  s += ". Hopfeng.";
-  char buf[14];
-  s.toCharArray(buf,14);
-  s = min;
-  s += "min. Kochz.";
-  char buf[14];
-  s.toCharArray(buf,14);
-  lcd.print(buf, CENTER, 16);
+  if(first){
+    //alarm();
+    clrScr(false, false);
+    String s = (alertedHopfengaben+1);
+    s += ". Hopfeng.";
+    char buf[14];
+    s.toCharArray(buf,14);
+    s = hopfengaben[alertedHopfengaben];
+    s += "min. Kochz.";
+    char buf[14];
+    s.toCharArray(buf,14);
+    lcd.print(buf, CENTER, 16);
+  }
+  
+  ClickEncoder::Button b = encoder->getButton();
+  if (b != ClickEncoder::Open) {
+    if( b == ClickEncoder::Clicked ){
+       fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+    }
+  } 
+  
 }
