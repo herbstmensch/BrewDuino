@@ -56,7 +56,7 @@ void enterAnzahlHopfengaben() {
         }
         hopfengaben = new int[anzahlHopfengaben];
         aktuelleHopfengabe = 0;
-        hopfengaben[aktuelleHopfengabe] = 20;
+        hopfengaben[aktuelleHopfengabe] = 20>kochzeit?kochzeit:20;
         fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
       }
       else
@@ -70,6 +70,15 @@ void defineHopfengaben() {
   if(encoderValue != 0 || first){
     first = false;
     hopfengaben[aktuelleHopfengabe] += encoderValue;  
+    
+    if(aktuelleHopfengabe > 0){
+      //Hopfengabe muss nach der vorangegangenen liegen
+      if(hopfengaben[aktuelleHopfengabe] <= hopfengaben[aktuelleHopfengabe-1])
+        hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1]+1;
+    } 
+    //Hopfenhabe darf nicht nach Kochende liegen
+    if(hopfengaben[aktuelleHopfengabe] > kochzeit)
+      hopfengaben[aktuelleHopfengabe] = kochzeit;
     
     clrScr(false,false);
     lcd.printNumI(int(aktuelleHopfengabe+1),8,12);
@@ -88,7 +97,7 @@ void defineHopfengaben() {
         if(aktuelleHopfengabe+1 >= anzahlHopfengaben){
           fsmKochen.immediateTransitionTo(stateDoKochen);
         } else {
-          hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1];
+          hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1]+1;
         }
     }
   } 
