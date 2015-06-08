@@ -2,9 +2,11 @@ int kochzeit = 90;
 int anzahlHopfengaben = 3;
 int* hopfengaben=0;
 int aktuelleHopfengabe=1;
+int alertedHopfengaben = 0;
 
-State stateReachKochTemp = State(reachKochTemp);
-State stateWaitKochDauer = State(prepareKochDauer,waitKochDauer,NULL);
+State stateReachKochTemp = State(NULL,reachKochTemp,prepareKochDauer);
+State stateWaitKochDauer = State(waitKochDauer);
+State stateAlertHopfengabe = State(alertHopfengabe);
 FSM fsmKochProzess = FSM(stateReachKochTemp);
 
 void enterKochzeit() {
@@ -105,6 +107,7 @@ void defineHopfengaben() {
 
 void enterDoKochen() {
   first = true;
+  alertedHopfengaben = -1;
   fsmKochProzess.immediateTransitionTo(stateReachKochTemp);
 }
 
@@ -149,6 +152,7 @@ void waitKochDauer() {
     long min = ((rest/1000) / 60) % 60;
     long sec = (rest/1000) % 60;
   
+    if(rest > alertUntil)
     clrScr(false,false);
     lcd.print("Kochen:", CENTER, 16);
     
@@ -165,8 +169,34 @@ void waitKochDauer() {
     char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 24);
+    
+    //Hopfengabe?
+    if(anzahlHopfengaben-1 > alertedHopfengaben){
+      long hg = hopfengaben[alertedHopfengaben+1]*60*1000;
+      long verstrichen = (millis()-storedSystemMillis);
+      if(verstrichen > hg){
+        alertedHopfengaben += 1;
+         fsmKochProzess.immediateTransitionTo(stateAlertHopfengabe);
+      }
+    }
+    
+    
   }
   if(rest <= 0){
     fsmMain.immediateTransitionTo(stateMenu);
   }
+}
+
+void alertHopfengabe(){
+  alarm();
+  clrScr(false, false);
+  String s = (alertedHopfengaben+1);
+  s += ". Hopfeng.";
+  char buf[14];
+  s.toCharArray(buf,14);
+  s = min;
+  s += "min. Kochz.";
+  char buf[14];
+  s.toCharArray(buf,14);
+  lcd.print(buf, CENTER, 16);
 }
