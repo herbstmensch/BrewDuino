@@ -198,18 +198,13 @@ void einmaischen() {
     //Temperatur ändern um Display reload zu verhindern
     //Wert sollte so klein sein, dass nicht geheizt wird.
     sollTemp = MIN_TEMP+1;
-    alertMillis = millis();
+    alarm();
     
     clrScr(false,false);
     
     lcd.print("Einmaischen", CENTER, 8);
     lcd.print("Weiter mit", CENTER, 16);
     lcd.print("Klick", CENTER, 24);
-  }
-  
-  //Akustisch warnen
-  if(alertMillis > 0){
-    alert(true,true);
   }
   
   ClickEncoder::Button b = encoder->getButton();
@@ -323,6 +318,7 @@ void reachAbmaischTemp() {
   }
   if(temp >= abmaischTemp){
     //Hier fehlt noch ein Zustand der das Ende Anmahnt
+    alarm();
     fsmMain.immediateTransitionTo(stateMenu);
   }
   
