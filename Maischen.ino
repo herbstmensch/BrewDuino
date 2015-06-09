@@ -193,7 +193,6 @@ void reachEinmaischTemp() {
   
 }
 
-
 void einmaischen() {
   if(sollTemp==MIN_TEMP){
     //Temperatur ändern um Display reload zu verhindern
@@ -208,11 +207,14 @@ void einmaischen() {
     lcd.print("Klick", CENTER, 24);
   }
   
+  //Akustisch warnen
   if(alertMillis > 0 && (millis()-alertMillis/500)%2==0){
     tone(PIN_BUZZER, 262, 250);
   } else {
     noTone(PIN_BUZZER);
   }
+  
+  //Visuell Warnen
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
