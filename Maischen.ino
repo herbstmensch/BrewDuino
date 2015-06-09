@@ -199,6 +199,7 @@ void einmaischen() {
     //Temperatur ändern um Display reload zu verhindern
     //Wert sollte so klein sein, dass nicht geheizt wird.
     sollTemp = MIN_TEMP+1;
+    alertMillis = millis();
     
     clrScr(false,false);
     
@@ -207,14 +208,28 @@ void einmaischen() {
     lcd.print("Klick", CENTER, 24);
   }
   
+  if(alertMillis > 0 && (millis()-alertMillis/500)%2==0){
+    tone(PIN_BUZZER, 262, 250);
+  } else {
+    noTone(PIN_BUZZER);
+  }
+  
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
       sollTemp = MIN_TEMP;
       aktuelleRast = 0;
+      alertMillis = 0;
+      noTone(PIN_BUZZER);
       fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
     }
   } 
+  
+  //Nach spät. 10 sec. den Alarm Abbrechen
+  if((millis()-alertMillis >= 10000){
+    alertMillis = 0;
+    noTone(PIN_BUZZER);
+  }
 }
 
 void reachRastTemp() {
