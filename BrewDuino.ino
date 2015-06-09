@@ -98,7 +98,7 @@ void setup()   {
   
   pinMode(PIN_BG_LIGHT, OUTPUT);
   pinMode(PIN_HEATER, OUTPUT);
-  digitalWrite(PIN_BG_LIGHT, LOW);
+  digitalWrite(PIN_BG_LIGHT, HIGH);
   digitalWrite(PIN_HEATER, HIGH);
   
   //Encoder und Interrupt Setup
