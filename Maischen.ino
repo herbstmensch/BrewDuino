@@ -208,17 +208,8 @@ void einmaischen() {
   }
   
   //Akustisch warnen
-  if(alertMillis > 0 && (millis()-alertMillis/500)%2==0){
-    tone(PIN_BUZZER, 262, 250);
-  } else {
-    noTone(PIN_BUZZER);
-  }
-  
-  //Visuell Warnen
-  if(alertMillis > 0 && (millis()-alertMillis/100)%2==0){
-    digitalWrite(PIN_BG_LIGHT,LOW);
-  } else {
-    digitalWrite(PIN_BG_LIGHT,HIGH);
+  if(alertMillis > 0){
+    alert(true,true);
   }
   
   ClickEncoder::Button b = encoder->getButton();
@@ -226,19 +217,10 @@ void einmaischen() {
     if( b == ClickEncoder::Clicked ){
       sollTemp = MIN_TEMP;
       aktuelleRast = 0;
-      alertMillis = 0;
-      noTone(PIN_BUZZER);
-      digitalWrite(PIN_BG_LIGHT,HIGH);
+      cancelAlarm();
       fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
     }
   } 
-  
-  //Nach spät. 10 sec. den Alarm Abbrechen
-  if((millis()-alertMillis >= 10000){
-    alertMillis = 0;
-    noTone(PIN_BUZZER);
-    digitalWrite(PIN_BG_LIGHT,HIGH);
-  }
 }
 
 void reachRastTemp() {
@@ -340,6 +322,7 @@ void reachAbmaischTemp() {
     lcd.print(buf, CENTER, 24);
   }
   if(temp >= abmaischTemp){
+    //Hier fehlt noch ein Zustand der das Ende Anmahnt
     fsmMain.immediateTransitionTo(stateMenu);
   }
   
