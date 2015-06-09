@@ -326,16 +326,32 @@ void alertTone(long millis){
   }
 }
 
-void alertLight(long millis){
-  if((millis()-millis/1000)%2==0){
+void alert(bool sound, bool light){
+  //Es gibt nur Alarm, wenn jemand den Startzeitpunkt festgelegt hat
+  if(alertMillis == 0)
+    return;
+  
+  long dur = millis()-millis;
+  
+  if(sound && (millis()-millis/500)%2==0){
+    tone(PIN_BUZZER, 262, 250);
+  } else {
+    noTone(PIN_BUZZER);
+  }
+  if(light && (dur/1000)%2==0){
     digitalWrite(PIN_BG_LIGHT,LOW);
   } else {
     digitalWrite(PIN_BG_LIGHT,HIGH);
   }
   
   //Nach spät. 10 sec. den Alarm Abbrechen
-  if((millis()-alertMillis >= 10000){
-    alertMillis = 0;
-    noTone(PIN_BUZZER);
+  if(dur >= 10000){
+    cancelAlarm();
   }
+}
+
+void cancelAlarm(){
+  alertMillis = 0;
+  noTone(PIN_BUZZER);
+  digitalWrite(PIN_BG_LIGHT,HIGH);
 }
