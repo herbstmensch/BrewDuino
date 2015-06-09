@@ -78,6 +78,7 @@ long lastRest = -1;
 long dauer = 0;
 long storedSystemMillis = 0;
 long lastTempMillis;
+long alertMillis = 0;
 
 bool first = false;
 bool isHeating;
@@ -308,4 +309,33 @@ void timerIsr() {
 
 void forceFirstDisplay(){
   first = true;
+}
+
+void alertTone(long millis){
+  long dur = millis()-millis;
+  if(millis()-millis/500)%2==0){
+    tone(PIN_BUZZER, 262, 250);
+  } else {
+    noTone(PIN_BUZZER);
+  }
+  
+  //Nach spät. 10 sec. den Alarm Abbrechen
+  if((millis()-millis >= 10000){
+    alertMillis = 0;
+    noTone(PIN_BUZZER);
+  }
+}
+
+void alertLight(long millis){
+  if((millis()-millis/1000)%2==0){
+    digitalWrite(PIN_BG_LIGHT,LOW);
+  } else {
+    digitalWrite(PIN_BG_LIGHT,HIGH);
+  }
+  
+  //Nach spät. 10 sec. den Alarm Abbrechen
+  if((millis()-alertMillis >= 10000){
+    alertMillis = 0;
+    noTone(PIN_BUZZER);
+  }
 }
