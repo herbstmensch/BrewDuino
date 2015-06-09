@@ -188,8 +188,6 @@ void waitKochDauer() {
   }
 }
 
-int alertMillis=0;
-
 void alertHopfengabe(){
   if(first){
     alertMillis = millis();
@@ -204,10 +202,11 @@ void alertHopfengabe(){
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
   }
-  if(alertMillis > 0 && (millis()-alertMillis/500)%2==0){
-    tone(PIN_BUZZER, 262, 250);
-  } else {
-    noTone(PIN_BUZZER);
+  
+  //warnen
+  if(alertMillis > 0){
+    alertTone(alertMillis);
+    alertLight(alertMillis);
   }
   
   
@@ -217,14 +216,9 @@ void alertHopfengabe(){
       fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
       alertMillis = 0;
       noTone(PIN_BUZZER);
+      digitalWrite(PIN_BG_LIGHT,HIGH);
     }
   } 
-  
-  //Nach spät. 10 sec. den Alarm Abbrechen
-  if((millis()-alertMillis >= 10000){
-    alertMillis = 0;
-    noTone(PIN_BUZZER);
-  }
   
   //Nach spät. 1 min. die Hopfengabe ausblenden
   if((millis()-alertMillis >= 60000){
