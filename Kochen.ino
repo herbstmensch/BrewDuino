@@ -185,6 +185,7 @@ void waitKochDauer() {
   }
   if(rest <= 0){
     //Hier fehlt noch ein Zustand der das Ende anmahnt
+    alarm();
     fsmMain.immediateTransitionTo(stateMenu);
   }
 }
