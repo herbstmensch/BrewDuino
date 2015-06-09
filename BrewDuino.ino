@@ -139,6 +139,9 @@ void loop() {
   readTemperature(false);
   checkHeatingStatus();
   addTemperature(false);
+
+  if(alertMillis != 0)
+    doAlert();
 }
 
 void enterMenu(){
@@ -326,19 +329,19 @@ void alertTone(long millis){
   }
 }
 
-void alert(bool sound, bool light){
-  //Es gibt nur Alarm, wenn jemand den Startzeitpunkt festgelegt hat
-  if(alertMillis == 0)
-    return;
-  
+void alarm(){
+  alertMillis = millis();
+}
+
+void doAlert(){
   long dur = millis()-millis;
   
-  if(sound && (millis()-millis/500)%2==0){
+  if((millis()-millis/500)%2==0){
     tone(PIN_BUZZER, 262, 250);
   } else {
     noTone(PIN_BUZZER);
   }
-  if(light && (dur/1000)%2==0){
+  if((dur/1000)%2==0){
     digitalWrite(PIN_BG_LIGHT,LOW);
   } else {
     digitalWrite(PIN_BG_LIGHT,HIGH);
