@@ -188,9 +188,11 @@ void waitKochDauer() {
   }
 }
 
+int alertMillis=0;
+
 void alertHopfengabe(){
   if(first){
-    //alarm();
+    alertMillis = millis();
     clrScr(false, false);
     String s = (alertedHopfengaben+1);
     s += ". Hopfeng.";
@@ -202,12 +204,31 @@ void alertHopfengabe(){
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
   }
+  if(alertMillis > 0 && (millis()-alertMillis/500)%2==0){
+    tone(PIN_BUZZER, 262, 250);
+  } else {
+    noTone(PIN_BUZZER);
+  }
+  
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
     if( b == ClickEncoder::Clicked ){
-       fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+      fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+      alertMillis = 0;
+      noTone(PIN_BUZZER);
     }
   } 
+  
+  //Nach spät. 10 sec. den Alarm Abbrechen
+  if((millis()-alertMillis >= 10000){
+    alertMillis = 0;
+    noTone(PIN_BUZZER);
+  }
+  
+  //Nach spät. 1 min. die Hopfengabe ausblenden
+  if((millis()-alertMillis >= 60000){
+    fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+  }
   
 }
