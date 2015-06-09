@@ -192,7 +192,7 @@ void waitKochDauer() {
 long hgMillis;
 void alertHopfengabe(){
   if(first){
-    alertMillis = millis();
+    alarm();
     hgMillis = alertMillis;
     clrScr(false, false);
     String s = (alertedHopfengaben+1);
@@ -205,12 +205,6 @@ void alertHopfengabe(){
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
   }
-  
-  //warnen
-  if(alertMillis > 0){
-    alert(true,true);
-  }
-  
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
