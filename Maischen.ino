@@ -215,6 +215,11 @@ void einmaischen() {
   }
   
   //Visuell Warnen
+  if(alertMillis > 0 && (millis()-alertMillis/100)%2==0){
+    digitalWrite(PIN_BG_LIGHT,LOW);
+  } else {
+    digitalWrite(PIN_BG_LIGHT,HIGH);
+  }
   
   ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
@@ -223,6 +228,7 @@ void einmaischen() {
       aktuelleRast = 0;
       alertMillis = 0;
       noTone(PIN_BUZZER);
+      digitalWrite(PIN_BG_LIGHT,HIGH);
       fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
     }
   } 
@@ -231,6 +237,7 @@ void einmaischen() {
   if((millis()-alertMillis >= 10000){
     alertMillis = 0;
     noTone(PIN_BUZZER);
+    digitalWrite(PIN_BG_LIGHT,HIGH);
   }
 }
 
