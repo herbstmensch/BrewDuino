@@ -152,7 +152,6 @@ void waitKochDauer() {
     long min = ((rest/1000) / 60) % 60;
     long sec = (rest/1000) % 60;
   
-    if(rest > alertUntil)
     clrScr(false,false);
     lcd.print("Kochen:", CENTER, 16);
     
@@ -190,19 +189,21 @@ void waitKochDauer() {
   }
 }
 
-long hgMillis;
+unsigned long hgMillis;
+
 void alertHopfengabe(){
   if(first){
     alarm();
     hgMillis = alertMillis;
     clrScr(false, false);
-    String s = (alertedHopfengaben+1);
+    String s = "";
+    s += (alertedHopfengaben+1);
     s += ". Hopfeng.";
     char buf[14];
     s.toCharArray(buf,14);
-    s = hopfengaben[alertedHopfengaben];
+    s = "";
+    s += hopfengaben[alertedHopfengaben];
     s += "min. Kochz.";
-    char buf[14];
     s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 16);
   }
@@ -216,7 +217,7 @@ void alertHopfengabe(){
   } 
   
   //Nach spät. 1 min. die Hopfengabe ausblenden
-  if((millis()-hgMillis >= 60000){
+  if(millis()-hgMillis >= 60000){
     fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
   }
   

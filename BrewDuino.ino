@@ -377,7 +377,7 @@ void alarm(){
 }
 
 void doAlert(){
-  long dur = millis()-alertMillis;
+  unsigned long dur = millis()-alertMillis;
   
   if((millis()-alertMillis/500)%2==0){
     tone(PIN_BUZZER, 262, 250);
