@@ -25,11 +25,8 @@ void enterKochzeit() {
     lcd.print(" min",29,24);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-        fsmKochen.immediateTransitionTo(stateEnterAnzahlHopfengaben);
-    }
+  if(buttonClicked()){
+    fsmKochen.immediateTransitionTo(stateEnterAnzahlHopfengaben);
   } 
 }
 
@@ -48,21 +45,19 @@ void enterAnzahlHopfengaben() {
     lcd.invertText(false);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      first = true;
-      if(anzahlHopfengaben > 0){
-        if (hopfengaben != 0) {
-          delete [] hopfengaben;
-        }
-        hopfengaben = new int[anzahlHopfengaben];
-        aktuelleHopfengabe = 0;
-        hopfengaben[aktuelleHopfengabe] = 20>kochzeit?kochzeit:20;
-        fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
+  if(buttonClicked()){
+    first = true;
+    if(anzahlHopfengaben > 0){
+      if (hopfengaben != 0) {
+        delete [] hopfengaben;
       }
-      else
-        fsmKochen.immediateTransitionTo(stateDoKochen);
+      hopfengaben = new int[anzahlHopfengaben];
+      aktuelleHopfengabe = 0;
+      hopfengaben[aktuelleHopfengabe] = 20>kochzeit?kochzeit:20;
+      fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
+    }
+    else {
+      fsmKochen.immediateTransitionTo(stateDoKochen);
     }
   } 
 }
@@ -92,15 +87,12 @@ void defineHopfengaben() {
     lcd.print("Minuten",15,28);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-        aktuelleHopfengabe += 1;
-        if(aktuelleHopfengabe+1 >= anzahlHopfengaben){
-          fsmKochen.immediateTransitionTo(stateDoKochen);
-        } else {
-          hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1]+1;
-        }
+  if(buttonClicked()){
+    aktuelleHopfengabe += 1;
+    if(aktuelleHopfengabe+1 >= anzahlHopfengaben){
+      fsmKochen.immediateTransitionTo(stateDoKochen);
+    } else {
+      hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1]+1;
     }
   } 
 }
@@ -183,7 +175,6 @@ void waitKochDauer() {
     
   }
   if(rest <= 0){
-    //Hier fehlt noch ein Zustand der das Ende anmahnt
     alarm();
     fsmMain.immediateTransitionTo(stateMenu);
   }
@@ -208,12 +199,9 @@ void alertHopfengabe(){
     lcd.print(buf, CENTER, 16);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
-      cancelAlarm();
-    }
+  if(buttonClicked()){
+    fsmKochProzess.immediateTransitionTo(stateWaitKochDauer);
+    cancelAlarm();
   } 
   
   //Nach spät. 1 min. die Hopfengabe ausblenden

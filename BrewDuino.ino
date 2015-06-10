@@ -1,6 +1,6 @@
 #define CREATOR "Herbstmensch"
 #define PROG_NAME "BrewDuino"
-#define PROG_VERSION "v0.5"
+#define PROG_VERSION "v0.9"
 #define COPYRIGHT "(c) 2015 - "
 #define COPYRIGHT2 "Tim Herbst"
 #include <LCD5110_Basic.h>
@@ -23,6 +23,8 @@
 #define PIN_LCD_DC 11
 #define PIN_LCD_RST 12
 #define PIN_LCD_SCE 13
+
+#define NUMITEMS(arg) ((unsigned int) (sizeof (arg) / sizeof (arg [0])))
 
 //Konfigurationsparameter festlegen
 #define TEMP_OFFSET 1
@@ -50,6 +52,7 @@ State stateMenu = State(enterMenu, menu, leaveMenu);
 State stateMaischen = State(enterMaischen, maischen, leaveMaischen);
 State stateKochen = State(enterKochen, kochen, leaveKochen);
 State stateHeizen = State(enterHeizen, heizen, leaveHeizen);
+State stateTimer = State(enterTimer, timer, NULL);
 //State stateSettings = State(enterSettings, settings, NULL);
 FSM fsmMain = FSM(stateMenu);
 
@@ -58,7 +61,11 @@ State stateEnterEinmaischTemp = State(forceFirstDisplay, enterEinmaischTemp, NUL
 State stateEnterAnzahlRasten = State(forceFirstDisplay, enterAnzahlRasten, NULL);
 State stateDefineRast = State(forceFirstDisplay, defineRast, NULL);
 State stateEnterAbmaischTemp = State(forceFirstDisplay, enterAbmaischTemp, NULL);
-State stateDoMaischen = State(enterDoMaischen, doMaischen,NULL);
+State stateReachEinmaischTemp = State(prepareReachEinmaischTemp,reachEinmaischTemp,NULL);
+State stateEinmaischen = State(einmaischen);
+State stateReachRastTemp = State(reachRastTemp);
+State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
+State stateReachAbmaischTemp = State(NULL,reachAbmaischTemp,NULL);
 FSM fsmMaischen = FSM(stateEnterEinmaischTemp);
 
 //Kochen FSM und States definieren
@@ -68,10 +75,16 @@ State stateDefineHopfengaben = State(forceFirstDisplay, defineHopfengaben, NULL)
 State stateDoKochen = State(enterDoKochen,doKochen, NULL);
 FSM fsmKochen = FSM(stateEnterKochzeit);
 
+//Timer FSM und States definieren
+State stateEnterTimerTime = State(forceFirstDisplay,enterTimerTime,NULL);
+State stateDoTimer = State(prepareDoTimer,doTimer,NULL);
+FSM fsmTimer = FSM(stateEnterTimerTime);
+
 //Variablen initialisieren
 
 int selectedMenuEntry = 0, menuOffset = 0;
-char menuEntrys[][] = {"Maischen","Kochen","Heizen","Einstell."};
+//char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer","Einstell."};
+char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer"};
 float lastTemps[]={0,0,0,0};
 int temp, lastTemp, sollTemp, lastHeatCheckTemp;
 int lastReadIndex=0;
@@ -111,7 +124,7 @@ void setup()   {
   Timer1.attachInterrupt(timerIsr); 
   
   //Temperaturen und Heizung initialisieren
-  sollTemp = 0;
+  setSollTemp(MIN_TEMP);
   isHeating = false;
   
   //Temperatursensor initialisieren
@@ -120,7 +133,7 @@ void setup()   {
   // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
   sensors.setResolution(thermometer, 9);
   //Init Temp array
-  for(int i = 0; i < TEMP_ARRAY_SIZE; i++)  
+  for(int i = 0; i < NUMITEMS(menuEntrys); i++)  
     readTemperature(true);
   //---------------------------------------------------------------
 
@@ -138,7 +151,7 @@ void loop() {
   } 
   
   readTemperature(false);
-  checkHeatingStatus();
+  checkHeatingStatus(false);
   addTemperature(false);
 
   if(alertMillis != 0)
@@ -147,12 +160,13 @@ void loop() {
 
 void enterMenu(){
   encoder->setAccelerationEnabled(false);
-  selectedMenuEntry = 0;
-  lastSelectedMenuEntry = -1;
-  sollTemp = MIN_TEMP;
+  //selectedMenuEntry = 0;
+  //menuOffset = 0;
+  setSollTemp(MIN_TEMP);
+  checkHeatingStatus(true);
   clrScr(true,false);
   lcd.print(PROG_NAME" "PROG_VERSION, CENTER, 0);
-  first = true;
+  forceFirstDisplay();
 }
 
 void leaveMenu(){
@@ -167,31 +181,39 @@ void enterMaischen(){
 }
 
 void leaveMaischen(){
-  sollTemp = MIN_TEMP;
+  setSollTemp(MIN_TEMP);
 }
 
 void enterKochen(){
   encoder->setAccelerationEnabled(true);
-  sollTemp = 100;
+  setSollTemp(100);
+  checkHeatingStatus(true);
   fsmKochen.immediateTransitionTo(stateEnterKochzeit);
   clrScr(true,false);
   lcd.print("--Kochen--",CENTER,0);
 }
 
 void leaveKochen(){
-  sollTemp = MIN_TEMP;
+  setSollTemp(MIN_TEMP);
 }
 
 void enterHeizen(){
   encoder->setAccelerationEnabled(true);
-  sollTemp = temp;
+  setSollTemp(temp);
   clrScr(true,false);
   lcd.print("--Heizen--",CENTER,0);
-  first = true;
+  forceFirstDisplay();
 }
 
 void leaveHeizen(){
-  sollTemp = MIN_TEMP;
+  setSollTemp(MIN_TEMP);
+}
+
+void enterTimer(){
+  encoder->setAccelerationEnabled(true);
+  fsmTimer.immediateTransitionTo(stateEnterTimerTime);
+  clrScr(true,false);
+  lcd.print("--Timer--",CENTER,0);
 }
 
 /*void enterSettings(){
@@ -207,7 +229,7 @@ void menu() {
       for(int i = 0; i < encoderValue; i++)
         menuUp();
     if(encoderValue < 0)
-      for(int i = encoderValue; i > 0; i--)
+      for(int i = encoderValue; i < 0; i++)
         menuDown();
         
     clrScr(false,false);
@@ -220,19 +242,18 @@ void menu() {
     lcd.print(menuEntrys[1+menuOffset], 25,24);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-        if(selectedMenuEntry == 0)
-          fsmMain.transitionTo(stateMaischen);
-        if(selectedMenuEntry == 1)
-          fsmMain.transitionTo(stateKochen);
-        if(selectedMenuEntry == 2)
-          fsmMain.transitionTo(stateHeizen);
-        if(selectedMenuEntry == 3)
-          //fsmMain.transitionTo(stateSettings);
-          alarm();
-    }
+  if(buttonClicked()){
+    if(selectedMenuEntry == 0)
+      fsmMain.transitionTo(stateMaischen);
+    if(selectedMenuEntry == 1)
+      fsmMain.transitionTo(stateKochen);
+    if(selectedMenuEntry == 2)
+      fsmMain.transitionTo(stateHeizen);
+    if(selectedMenuEntry == 3)
+      fsmMain.transitionTo(stateTimer);
+    //if(selectedMenuEntry == 4)
+      //fsmMain.transitionTo(stateSettings);
+      //alarm();
   } 
 }
 
@@ -246,8 +267,8 @@ void menuUp() {
 	
 void menuDown() {
 	selectedMenuEntry += 1;
-	if(selectedMenuEntry > menuEntrys.length-1)
-		selectedMenuEntry = menuEntrys.length-1;
+	if(selectedMenuEntry > NUMITEMS(menuEntrys)-1)
+		selectedMenuEntry = NUMITEMS(menuEntrys)-1;
 	if(selectedMenuEntry > menuOffset+1)
 		menuOffset += 1;	
 }
@@ -261,24 +282,12 @@ void kochen(){
 }
 
 void heizen(){
-  encoderValue = encoder->getValue();
-  if(encoderValue != 0 || first){
-    first = false;
-    sollTemp += encoderValue;
-    if(sollTemp > 101)
-      sollTemp = 101;
-    if(sollTemp < 0)
-      sollTemp = 0;
-  
-    clrScr(false,false);
-    lcd.print("Heizen auf:",0,16);
-    lcd.invertText(true);
-    lcd.printNumI(int(sollTemp),15,24);
-    lcd.invertText(false);
-    lcd.print("~ C",29,24);
-  }
+  doHeizen();
 }
 
+void timer(){
+  fsmTimer.update();
+}
 /*void settings(){
   fsmSettings.update();
 }*/
@@ -290,30 +299,39 @@ void readTemperature(bool force){
     lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
     
     float sum = 0;
-    for(int i = 0; i < lastTemps.length; i++)
+    for(int i = 0; i < NUMITEMS(lastTemps); i++)
       sum += lastTemps[i];
       
     //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
-    temp = sum / lastTemps.length;
+    temp = sum / NUMITEMS(lastTemps);
     
-    if(lastReadIndex >= lastTemps.length)
+    if(lastReadIndex >= NUMITEMS(lastTemps))
       lastReadIndex = 0;
     
     lastTempMillis = millis();
   }
 }
 
-void checkHeatingStatus(){
-  if(temp != lastHeatCheckTemp){
+void setSollTemp(int t){
+  sollTemp = t;
+  checkHeatingStatus(true);
+}
+
+void checkHeatingStatus(bool force){
+  if(temp != lastHeatCheckTemp || force){
     lastHeatCheckTemp = temp;
     //Ein oder ausschalten des Heizelementes.
     //Evtl. schaltfrequent sicherstellen
-    if(isHeating){
-      if(temp >= sollTemp + TEMP_OFFSET)
-        turnOffHeating();
-    } else {
-       if(temp - TEMP_OFFSET <= sollTemp - TEMP_OFFSET)
-        turnOnHeating();
+    
+    //-127 heißt kein Thermometer
+    if(temp != -127){
+      if(isHeating){
+        if(temp >= sollTemp + TEMP_OFFSET)
+          turnOffHeating();
+      } else {
+         if(temp <= sollTemp - TEMP_OFFSET)
+          turnOnHeating();
+      }
     }
   }
 }
@@ -379,12 +397,12 @@ void alarm(){
 void doAlert(){
   unsigned long dur = millis()-alertMillis;
   
-  if((millis()-alertMillis/500)%2==0){
+  if((dur/250)%2==0){
     tone(PIN_BUZZER, 262, 250);
   } else {
     noTone(PIN_BUZZER);
   }
-  if((dur/1000)%2==0){
+  if((dur/500)%2==0){
     digitalWrite(PIN_BG_LIGHT,LOW);
   } else {
     digitalWrite(PIN_BG_LIGHT,HIGH);
@@ -400,4 +418,11 @@ void cancelAlarm(){
   alertMillis = 0;
   noTone(PIN_BUZZER);
   digitalWrite(PIN_BG_LIGHT,HIGH);
+}
+
+bool buttonClicked(){
+  ClickEncoder::Button b = encoder->getButton();
+  if (b != ClickEncoder::Open && b == ClickEncoder::Clicked )
+    return true;
+  return false;
 }

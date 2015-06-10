@@ -7,14 +7,6 @@ int* rastDauer=0;
 int aktuelleRast = 0;
 int subState = 0;
 
-State stateReachEinmaischTemp = State(reachEinmaischTemp);
-State stateEinmaischen = State(einmaischen);
-State stateReachRastTemp = State(reachRastTemp);
-State stateWaitRastDauer = State(prepareRastDauer,waitRastDauer,NULL);
-State stateReachAbmaischTemp = State(reachAbmaischTemp);
-
-FSM fsmMaischeProzess = FSM(stateReachEinmaischTemp);
-
 void enterEinmaischTemp() {
   
   encoderValue = encoder->getValue();
@@ -33,11 +25,8 @@ void enterEinmaischTemp() {
     lcd.print("~ C",70,24);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      fsmMaischen.immediateTransitionTo(stateEnterAnzahlRasten);
-    }
+  if(buttonClicked()){
+    fsmMaischen.immediateTransitionTo(stateEnterAnzahlRasten);
   } 
   
 }
@@ -58,28 +47,25 @@ void enterAnzahlRasten() {
     lcd.invertText(false);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      if(anzahlRasten > 0){
-        subState = 0;
-        if (rastTemp != 0) {
-          delete [] rastTemp;
-        }
-        if (rastDauer != 0) {
-          delete [] rastDauer;
-        }
-        rastTemp = new int[anzahlRasten];
-        rastDauer = new int[anzahlRasten];
-        aktuelleRast = 0;
-        rastTemp[aktuelleRast] = einmaischTemp;
-        rastDauer[aktuelleRast] = 30;
-        
-        fsmMaischen.immediateTransitionTo(stateDefineRast);
+  if(buttonClicked()){
+    if(anzahlRasten > 0){
+      subState = 0;
+      if (rastTemp != 0) {
+        delete [] rastTemp;
       }
-      else
-        fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
+      if (rastDauer != 0) {
+        delete [] rastDauer;
+      }
+      rastTemp = new int[anzahlRasten];
+      rastDauer = new int[anzahlRasten];
+      aktuelleRast = 0;
+      rastTemp[aktuelleRast] = einmaischTemp;
+      rastDauer[aktuelleRast] = 30;
+      
+      fsmMaischen.immediateTransitionTo(stateDefineRast);
     }
+    else
+      fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
   } 
 }
 
@@ -112,24 +98,21 @@ void defineRast() {
     lcd.invertText(false);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      if(subState == 0 ){
-        subState = 1;
-        first = true;
+  if(buttonClicked()){
+    if(subState == 0 ){
+      subState = 1;
+      first = true;
+    } else {
+      subState = 0;
+      aktuelleRast += 1;
+      first = true;
+      if(aktuelleRast >= anzahlRasten){
+        fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
       } else {
-        subState = 0;
-        aktuelleRast += 1;
-        first = true;
-        if(aktuelleRast >= anzahlRasten){
-          fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
-        } else {
-          rastTemp[aktuelleRast] = rastTemp[aktuelleRast-1];
-          rastDauer[aktuelleRast] = 30;
-        }
+        rastTemp[aktuelleRast] = rastTemp[aktuelleRast-1];
+        rastDauer[aktuelleRast] = 30;
       }
-    }
+      }
   } 
 }
 
@@ -150,26 +133,18 @@ void enterAbmaischTemp() {
     lcd.print("~ C",70,24);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-        fsmMaischen.immediateTransitionTo(stateDoMaischen);
-    }
+  if(buttonClicked()){
+    fsmMaischen.immediateTransitionTo(stateReachEinmaischTemp);
   } 
 }
 
-void enterDoMaischen() {
-  fsmMaischeProzess.immediateTransitionTo(stateReachEinmaischTemp);
-  sollTemp = MIN_TEMP;
-}
-
-void doMaischen() {
-  fsmMaischeProzess.update();
+void prepareReachEinmaischTemp() {
+  setSollTemp(MIN_TEMP);
 }
 
 void reachEinmaischTemp() {
   if(sollTemp == MIN_TEMP){
-    sollTemp = einmaischTemp;
+    setSollTemp(einmaischTemp);
     
     clrScr(false,false);
     
@@ -183,12 +158,9 @@ void reachEinmaischTemp() {
     lcd.print(buf, CENTER, 24);
   }
   if(temp >= einmaischTemp){
-    sollTemp = MIN_TEMP;
-    if(anzahlRasten > 0){
-      fsmMaischeProzess.immediateTransitionTo(stateEinmaischen);
-    }
-    else 
-      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
+    setSollTemp(MIN_TEMP);
+    alarm();
+    fsmMaischen.immediateTransitionTo(stateEinmaischen);
   }
   
 }
@@ -197,8 +169,7 @@ void einmaischen() {
   if(sollTemp==MIN_TEMP){
     //Temperatur ändern um Display reload zu verhindern
     //Wert sollte so klein sein, dass nicht geheizt wird.
-    sollTemp = MIN_TEMP+1;
-    alarm();
+    setSollTemp(MIN_TEMP+1);
     
     clrScr(false,false);
     
@@ -207,21 +178,21 @@ void einmaischen() {
     lcd.print("Klick", CENTER, 24);
   }
   
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if( b == ClickEncoder::Clicked ){
-      sollTemp = MIN_TEMP;
-      aktuelleRast = 0;
-      cancelAlarm();
-      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+  if(buttonClicked()){
+    setSollTemp(MIN_TEMP);
+    aktuelleRast = 0;
+    cancelAlarm();
+    if(anzahlRasten > 0){
+      fsmMaischen.immediateTransitionTo(stateReachRastTemp);
     }
+    else 
+      fsmMaischen.immediateTransitionTo(stateReachAbmaischTemp);
   } 
 }
 
 void reachRastTemp() {
   if(sollTemp==MIN_TEMP){
-    sollTemp = rastTemp[aktuelleRast];
-    
+     setSollTemp(rastTemp[aktuelleRast]);
     clrScr(false,false);
     
     lcd.print("Warte auf", CENTER, 8);
@@ -239,7 +210,7 @@ void reachRastTemp() {
   }
   
   if(temp >= rastTemp[aktuelleRast]){
-    fsmMaischeProzess.immediateTransitionTo(stateWaitRastDauer);
+    fsmMaischen.immediateTransitionTo(stateWaitRastDauer);
   }
 }
 
@@ -290,20 +261,20 @@ void waitRastDauer() {
   }
   
   if(rest <= 0){
-    sollTemp = MIN_TEMP;
+    setSollTemp(MIN_TEMP);
     if(anzahlRasten > aktuelleRast+1){
       aktuelleRast += 1;
       lastRest = MAX_LONG;
-      fsmMaischeProzess.immediateTransitionTo(stateReachRastTemp);
+      fsmMaischen.immediateTransitionTo(stateReachRastTemp);
     } else {
-      fsmMaischeProzess.immediateTransitionTo(stateReachAbmaischTemp);
+      fsmMaischen.immediateTransitionTo(stateReachAbmaischTemp);
     }
   }
 }
 
 void reachAbmaischTemp() {
   if(sollTemp == MIN_TEMP){
-    sollTemp = abmaischTemp;
+    setSollTemp(abmaischTemp);
     
     clrScr(false,false);
     
@@ -317,7 +288,6 @@ void reachAbmaischTemp() {
     lcd.print(buf, CENTER, 24);
   }
   if(temp >= abmaischTemp){
-    //Hier fehlt noch ein Zustand der das Ende Anmahnt
     alarm();
     fsmMain.immediateTransitionTo(stateMenu);
   }
