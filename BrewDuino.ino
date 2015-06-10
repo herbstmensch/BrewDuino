@@ -39,7 +39,7 @@ extern uint8_t SmallFont[];
 
 //Encoder einrichten;
 ClickEncoder *encoder;
-int16_t lastEncoderValue, encoderValue;
+int16_t encoderValue;
 
 //Temperatursensor DS1820 Initialisierung
 OneWire oneWire(PIN_THERMOMETER);
@@ -76,11 +76,11 @@ float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp, lastHeatCheckTemp;
 int lastReadIndex=0;
 
-long lastRest = -1;
-long dauer = 0;
-long storedSystemMillis = 0;
-long lastTempMillis;
-long alertMillis = 0;
+unsigned long lastRest = -1;
+unsigned long dauer = 0;
+unsigned long storedSystemMillis = 0;
+unsigned long lastTempMillis;
+unsigned long alertMillis = 0;
 
 bool first = false;
 bool isHeating;
@@ -109,7 +109,6 @@ void setup()   {
   encoder->setAccelerationEnabled(false);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr); 
-  lastEncoderValue = -1;
   
   //Temperaturen und Heizung initialisieren
   sollTemp = 0;
@@ -348,9 +347,9 @@ void alarm(){
 }
 
 void doAlert(){
-  long dur = millis()-millis;
+  long dur = millis()-alertMillis;
   
-  if((millis()-millis/500)%2==0){
+  if((millis()-alertMillis/500)%2==0){
     tone(PIN_BUZZER, 262, 250);
   } else {
     noTone(PIN_BUZZER);
