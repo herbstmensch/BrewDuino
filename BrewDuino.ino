@@ -49,6 +49,7 @@ DeviceAddress thermometer;
 State stateMenu = State(enterMenu, menu, leaveMenu);
 State stateMaischen = State(enterMaischen, maischen, leaveMaischen);
 State stateKochen = State(enterKochen, kochen, leaveKochen);
+State stateHeizen = State(enterHeizen, heizen, leaveHeizen);
 //State stateSettings = State(enterSettings, settings, NULL);
 FSM fsmMain = FSM(stateMenu);
 
@@ -181,6 +182,18 @@ void leaveKochen(){
   sollTemp = MIN_TEMP;
 }
 
+void enterHeizen(){
+  encoder->setAccelerationEnabled(true);
+  sollTemp = temp;
+  clrScr(true,false);
+  lcd.print("--Heizen--",CENTER,0);
+  first = true;
+}
+
+void leaveHeizen(){
+  sollTemp = MIN_TEMP;
+}
+
 /*void enterSettings(){
   fsmSettings.immediateTransitionTo();
 }*/
@@ -215,8 +228,7 @@ void menu() {
         if(selectedMenuEntry == 1)
           fsmMain.transitionTo(stateKochen);
         if(selectedMenuEntry == 2)
-          //fsmMain.transitionTo(stateKochen);
-          alarm();
+          fsmMain.transitionTo(stateHeizen);
         if(selectedMenuEntry == 3)
           //fsmMain.transitionTo(stateSettings);
           alarm();
@@ -246,6 +258,25 @@ void maischen(){
 
 void kochen(){
   fsmKochen.update();
+}
+
+void heizen(){
+  encoderValue = encoder->getValue();
+  if(encoderValue != 0 || first){
+    first = false;
+    sollTemp += encoderValue;
+    if(sollTemp > 101)
+      sollTemp = 101;
+    if(sollTemp < 0)
+      sollTemp = 0;
+  
+    clrScr(false,false);
+    lcd.print("Heizen auf:",0,16);
+    lcd.invertText(true);
+    lcd.printNumI(int(sollTemp),15,24);
+    lcd.invertText(false);
+    lcd.print("~ C",29,24);
+  }
 }
 
 /*void settings(){
