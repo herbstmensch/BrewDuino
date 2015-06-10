@@ -19,12 +19,16 @@ BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 * Heizt auf, und hält eine eingegebene Temperatur
 
 ### Einstellungen
-* Live Anpassung aller Betriebsparameter
+* (noch nicht implementiert)
+* Live Anpassung aller Betriebsparameter:
   * Ein-Ausschalt Temperaturoffset
+  * Standard Rasten Anzahl
+  * Standard Hopfengaben Anzahl
   * 
 
 ##Hardware
-* einen AtMega 328P, mit Arduino-Bootloader,
-* ein Nokia 5110 Display (PCD8544),
-* ein Relais zur Ansteuerung eines Einkochers oder einer Kochplatte und
-* einen DS18B20 Temperatursensor
+* Prozessor: AtMega 328P, mit Arduino-Bootloader,
+* Display: Nokia 5110 Display (PCD8544),
+* SainSmart Relaiskarte zur Ansteuerung eines Einkochers oder einer Kochplatte
+* DS18B20 Temperatursensor
+* Rotary Encoder mit Button zur Eingabe
