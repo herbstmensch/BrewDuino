@@ -69,7 +69,9 @@ State stateDoKochen = State(enterDoKochen,doKochen, NULL);
 FSM fsmKochen = FSM(stateEnterKochzeit);
 
 //Variablen initialisieren
-int selectedMenuEntry, lastSelectedMenuEntry;
+
+int selectedMenuEntry = 0, menuOffset = 0;
+char menuEntrys[][] = {"Maischen","Kochen","Heizen","Einstell."};
 float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
 int temp, lastTemp, sollTemp, lastHeatCheckTemp;
 int lastReadIndex=0;
@@ -190,14 +192,21 @@ void menu() {
   
   if(encoderValue != 0 || first){
     first = false;
-    selectedMenuEntry -= encoderValue;
-    if(selectedMenuEntry > 1) selectedMenuEntry = 1;
-    if(selectedMenuEntry < 0) selectedMenuEntry = 0;
+    if(encoderValue > 0)
+      for(int i = 0; i < encoderValue; i++)
+        menuUp();
+    if(encoderValue < 0)
+      for(int i = encoderValue; i > 0; i--)
+        menuDown();
+        
     clrScr(false,false);
-    lcd.print("=>", 10, 16+selectedMenuEntry*8);
-    lcd.print("Maischen", 25, 16);
-    lcd.print("Kochen", 25, 24);
-    //lcd.print("Parameter", 30, 28);
+    
+    if(selectedMenuEntry == 0+menuOffset)
+      lcd.print("=>", 10, 16);
+    lcd.print(menuEntrys[0+menuOffset], 25,16);
+    if(selectedMenuEntry == 1+menuOffset)
+      lcd.print("=>", 10, 24);
+    lcd.print(menuEntrys[1+menuOffset], 25,24);
   }
   
   ClickEncoder::Button b = encoder->getButton();
@@ -207,10 +216,30 @@ void menu() {
           fsmMain.transitionTo(stateMaischen);
         if(selectedMenuEntry == 1)
           fsmMain.transitionTo(stateKochen);
-       // if(selectedMenuEntry == 2)
-         // fsmMain.transitionTo(stateSettings);
+        if(selectedMenuEntry == 2)
+          //fsmMain.transitionTo(stateKochen);
+          alarm();
+        if(selectedMenuEntry == 3)
+          //fsmMain.transitionTo(stateSettings);
+          alarm();
     }
   } 
+}
+
+void menuUp() {
+	selectedMenuEntry -= 1;
+	if(selectedMenuEntry < 0)
+		selectedMenuEntry = 0;
+	if(selectedMenuEntry < menuOffset)
+		menuOffset--;
+}
+	
+void menuDown() {
+	selectedMenuEntry += 1;
+	if(selectedMenuEntry > menuEntrys.length-1)
+		selectedMenuEntry = menuEntrys.length-1;
+	if(selectedMenuEntry > menuOffset+1)
+		menuOffset += 1;	
 }
 
 void maischen(){
@@ -312,21 +341,6 @@ void timerIsr() {
 
 void forceFirstDisplay(){
   first = true;
-}
-
-void alertTone(long millis){
-  long dur = millis()-millis;
-  if(millis()-millis/500)%2==0){
-    tone(PIN_BUZZER, 262, 250);
-  } else {
-    noTone(PIN_BUZZER);
-  }
-  
-  //Nach spät. 10 sec. den Alarm Abbrechen
-  if((millis()-millis >= 10000){
-    alertMillis = 0;
-    noTone(PIN_BUZZER);
-  }
 }
 
 void alarm(){
