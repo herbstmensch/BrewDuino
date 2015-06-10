@@ -28,7 +28,6 @@
 #define TEMP_OFFSET 1
 #define MIN_TEMP -999
 #define MAX_LONG 2147483647L;
-#define TEMP_ARRAY_SIZE 5
 #define ENC_HALFSTEP
 #define SERIAL N
 
@@ -72,7 +71,7 @@ FSM fsmKochen = FSM(stateEnterKochzeit);
 
 int selectedMenuEntry = 0, menuOffset = 0;
 char menuEntrys[][] = {"Maischen","Kochen","Heizen","Einstell."};
-float lastTemps[]={0,0,0,0,0,0,0,0,0,0};
+float lastTemps[]={0,0,0,0};
 int temp, lastTemp, sollTemp, lastHeatCheckTemp;
 int lastReadIndex=0;
 
@@ -260,13 +259,13 @@ void readTemperature(bool force){
     lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
     
     float sum = 0;
-    for(int i = 0; i < TEMP_ARRAY_SIZE; i++)
+    for(int i = 0; i < lastTemps.length; i++)
       sum += lastTemps[i];
       
     //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
-    temp = sum / TEMP_ARRAY_SIZE;
+    temp = sum / lastTemps.length;
     
-    if(lastReadIndex >= TEMP_ARRAY_SIZE)
+    if(lastReadIndex >= lastTemps.length)
       lastReadIndex = 0;
     
     lastTempMillis = millis();
