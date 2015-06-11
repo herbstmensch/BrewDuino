@@ -93,7 +93,7 @@ int selectedMenuEntry = 0, menuOffset = 0;
 //char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer","Einstell."};
 char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer"};
 float lastTemps[TMP_SMOOTH]={0,0,0,0,0};
-float tmpTotal = 0;
+float tempTotal = 0;
 int temp, lastTemp, sollTemp, lastHeatCheckTemp, tmpIndex=0;
 
 unsigned long lastRest = -1;
