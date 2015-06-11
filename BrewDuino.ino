@@ -450,3 +450,8 @@ void checkForErrors(){
     errors += ERROR_NO_THERMOMETER;
   }	
 }
+
+void printRow(char* text, int pos, int row){
+    lcd.clrRow(row);
+    lcd.print(text, pos, row*8);
+}
