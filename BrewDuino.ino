@@ -29,9 +29,15 @@
 //Konfigurationsparameter festlegen
 #define TEMP_OFFSET 1
 #define MIN_TEMP -999
+#define TMP_SMOOTH 5
 #define MAX_LONG 2147483647L;
 #define ENC_HALFSTEP
 #define SERIAL N
+
+//Fehler festlegen
+#define ERROR_NO_THERMOMETER 1
+
+int errors = 0;
 
 //Display einrichten 
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
@@ -49,6 +55,7 @@ DeviceAddress thermometer;
 
 //Main FSM und States definieren
 State stateMenu = State(enterMenu, menu, leaveMenu);
+State stateError = State(error);
 State stateMaischen = State(enterMaischen, maischen, leaveMaischen);
 State stateKochen = State(enterKochen, kochen, leaveKochen);
 State stateHeizen = State(enterHeizen, heizen, leaveHeizen);
@@ -85,9 +92,9 @@ FSM fsmTimer = FSM(stateEnterTimerTime);
 int selectedMenuEntry = 0, menuOffset = 0;
 //char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer","Einstell."};
 char* menuEntrys[] = {"Maischen","Kochen","Heizen","Timer"};
-float lastTemps[]={0,0,0,0};
-int temp, lastTemp, sollTemp, lastHeatCheckTemp;
-int lastReadIndex=0;
+float lastTemps[TMP_SMOOTH]={0,0,0,0,0};
+float tmpTotal = 0;
+int temp, lastTemp, sollTemp, lastHeatCheckTemp, tmpIndex=0;
 
 unsigned long lastRest = -1;
 unsigned long dauer = 0;
@@ -136,8 +143,10 @@ void setup()   {
   for(int i = 0; i < NUMITEMS(menuEntrys); i++)  
     readTemperature(true);
   //---------------------------------------------------------------
-
+  checkForErrors();
   delay(2000);
+  if(errors > 0)
+    fsmMain.immediateTransitionTo(stateError);
 }
 
 void loop() {
@@ -273,6 +282,10 @@ void menuDown() {
 		menuOffset += 1;	
 }
 
+void error(){
+  //Fehler anzeigen
+}
+
 void maischen(){
   fsmMaischen.update();
 }
@@ -293,22 +306,26 @@ void timer(){
 }*/
 
 void readTemperature(bool force){
-  if(millis()-lastTempMillis > 1000 || force){
+  //Gelesen wir nur alle 2,5 sec.
+  if(millis()-lastTempMillis > 2500 || force){
+    lastTempMillis = millis();
+    
     //Aktuelle Temperatur lesen.
     sensors.requestTemperatures(); 
-    lastTemps[lastReadIndex++] = sensors.getTempC(thermometer);
     
-    float sum = 0;
-    for(int i = 0; i < NUMITEMS(lastTemps); i++)
-      sum += lastTemps[i];
+    //Letzte Temperatur dieser Position aus Summe nehmen
+    tempTotal -= lastTemps[tmpIndex];
+    //Neue Temperatur dieser Position schreiben
+    lastTemps[tmpIndex] = sensors.getTempC(thermometer);
+    //Neue Temperatur dieser Position zur Summe hinzunehmen und Position erhöhen
+    tempTotal += lastTemps[tmpIndex++];
       
-    //Tatsächliche Temperatur ist das Mittel über die letzten 10 gelesenen Temperaturen
-    temp = sum / NUMITEMS(lastTemps);
+    //Durchschnitt errechnen
+    temp = tempTotal / TMP_SMOOTH;
     
-    if(lastReadIndex >= NUMITEMS(lastTemps))
-      lastReadIndex = 0;
-    
-    lastTempMillis = millis();
+    //Ggf. Position korrigieren
+    if(tmpIndex >= TMP_SMOOTH)
+      tmpIndex = 0;
   }
 }
 
@@ -425,4 +442,11 @@ bool buttonClicked(){
   if (b != ClickEncoder::Open && b == ClickEncoder::Clicked )
     return true;
   return false;
+}
+
+void checkForErrors(){
+  if(temp = -127){
+    //Kein Thermometer
+    errors += ERROR_NO_THERMOMETER;
+  }	
 }
