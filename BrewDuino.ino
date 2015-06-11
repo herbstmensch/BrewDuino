@@ -110,10 +110,10 @@ void setup()   {
   lcd.InitLCD();
   lcd.clrScr();
   lcd.setFont(SmallFont);
-  printRow()(CREATOR, LEFT, 0);
-  printRow()(PROG_NAME" "PROG_VERSION, LEFT, 16);
-  printRow()(COPYRIGHT, LEFT, 32);
-  printRow()(COPYRIGHT2, RIGHT, 40);
+  printRow(CREATOR, LEFT, 0);
+  printRow(PROG_NAME" "PROG_VERSION, LEFT, 16);
+  printRow(COPYRIGHT, LEFT, 32);
+  printRow(COPYRIGHT2, RIGHT, 40);
   
   #if SERIAL != N
     Serial.begin(9600);
@@ -174,7 +174,7 @@ void enterMenu(){
   setSollTemp(MIN_TEMP);
   checkHeatingStatus(true);
   clrScr(true,false);
-  printRow()(PROG_NAME" "PROG_VERSION, CENTER, 0);
+  printRow(PROG_NAME" "PROG_VERSION, CENTER, 0);
   forceFirstDisplay();
 }
 
@@ -186,7 +186,7 @@ void enterMaischen(){
   encoder->setAccelerationEnabled(true);
   fsmMaischen.immediateTransitionTo(stateEnterEinmaischTemp);
   clrScr(true,false);
-  printRow()("--Maischen--",CENTER,0);
+  printRow("--Maischen--",CENTER,0);
 }
 
 void leaveMaischen(){
@@ -199,7 +199,7 @@ void enterKochen(){
   checkHeatingStatus(true);
   fsmKochen.immediateTransitionTo(stateEnterKochzeit);
   clrScr(true,false);
-  printRow()("--Kochen--",CENTER,0);
+  printRow("--Kochen--",CENTER,0);
 }
 
 void leaveKochen(){
@@ -210,7 +210,7 @@ void enterHeizen(){
   encoder->setAccelerationEnabled(true);
   setSollTemp(temp);
   clrScr(true,false);
-  printRow()("--Heizen--",CENTER,0);
+  printRow("--Heizen--",CENTER,0);
   forceFirstDisplay();
 }
 
@@ -222,7 +222,7 @@ void enterTimer(){
   encoder->setAccelerationEnabled(true);
   fsmTimer.immediateTransitionTo(stateEnterTimerTime);
   clrScr(true,false);
-  printRow()("--Timer--",CENTER,0);
+  printRow("--Timer--",CENTER,0);
 }
 
 /*void enterSettings(){
@@ -242,10 +242,10 @@ void menu() {
         menuDown();
         
     if(selectedMenuEntry == 0+menuOffset)
-      printRow()("=>", 10, 16);
+      printRow("=>", 10, 16);
     lcd.print(menuEntrys[0+menuOffset], 25,16);
     if(selectedMenuEntry == 1+menuOffset)
-      printRow()("=>", 10, 24);
+      printRow("=>", 10, 24);
     lcd.print(menuEntrys[1+menuOffset], 25,24);
   }
   
@@ -376,7 +376,7 @@ void addTemperature(boolean force) {
     s += "~ C";
     char buf[14];
     s.toCharArray(buf,14);
-    printRow()(buf, RIGHT, 40);
+    printRow(buf, RIGHT, 40);
   }
 }
 
