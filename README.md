@@ -19,7 +19,7 @@ BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 * Heizt auf eine eingegebene Temperatur
 * Hält diese Temperatur dauerhaft
 
-### Timer (noch nicht implementiert)
+### Timer
 * Countdown einer eingegebenen Zeit
 * Optische und akustische Warung bei Ablauf der Zeit
 
