@@ -34,3 +34,22 @@ BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 * SainSmart Relaiskarte
 * DS18B20 Temperatursensor
 * Rotary Encoder mit Button
+ 
+###Schaltplan
+![Schaltplan](/Hardware/BrewDuino_Schaltplan.png)
+
+###Board
+![PCB](/Hardware/BrewDuino_Leiterplatte.png)
+
+###Bauteile
+Bezeichnung | Bauteil
+------------ | -------------
+C1 | Kondensator 22 uF
+C2 | Kondensator 22 uF
+C3 | Kondensator 100 nF
+C4 | Kondensator 100 nF
+U2 | Spannungsregulator
+D1 | Diode
+JX | PinHeader
+XTAL2 | Quartz 16 Mhz
+R1 | Wiederstand 220 Ohm
