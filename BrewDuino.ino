@@ -14,7 +14,8 @@
 #define PIN_ROTARY_1 2
 #define PIN_ROTARY_2 3
 #define PIN_ROTARY_BUTTON 4
-#define PIN_BG_LIGHT 5
+#define PIN_BG_LIGHT A0
+#define PIN_RUEHRER 5
 #define PIN_HEATER 6
 #define PIN_THERMOMETER 7
 #define PIN_BUZZER 8
