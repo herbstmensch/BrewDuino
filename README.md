@@ -53,3 +53,24 @@ D1 | Diode
 JX | PinHeader
 XTAL2 | Quartz 16 Mhz
 R1 | Wiederstand 220 Ohm
+
+###Anschlüsse
+Bezeichung | Anschluß
+-----------|---------
+VCC  | Versorgungsspannung 5V
+GND  | MAsse
+SCE  | Nokia 5110 Display
+RST  | Nokia 5110 Display
+D/C  | Nokia 5110 Display
+MOSI | Nokia 5110 Display
+SCLK | Nokia 5110 Display
+RST  | Reset
+TX   | Tranceive (Programmierung)
+RX   | Receive (Programmierung)
+RT1  | Rotary Encoder
+RT2  | Rotary Encoder
+BTN  | Button zur Eingabe
+RL1  | Relais 1 (Kocher oder Heizplatte)
+RL2  | Relais 2 (Rührwerk)
+TMP  | Temperatursensor Data
+BZZ  | Summer
