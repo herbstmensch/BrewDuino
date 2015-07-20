@@ -4,7 +4,7 @@ BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 ## Funktionen
 
 ### Maischen
-* Definition und Ausführung Des Kompletten Maischeplans.
+* Definition und Ausführung des Kompletten Maischeplans.
 * Optische und akustische Warung bei Erreichen der Einmaischtemperatur
 * Unterbrechung des Maischeplans, bis eingemaischt wurde
 * Optische und akustische Warung bei Erreichen der Abmaischtemperatur
@@ -24,9 +24,11 @@ BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 * Optische und akustische Warung bei Ablauf der Zeit
 
 ### Einstellungen (noch nicht implementiert)
-* Live Anpassung aller Betriebsparameter:
+* Anpassung aller Betriebsparameter:
   * Ein-Ausschalt Temperaturoffset
   * Intervall der Temperaturmessungen
+  * Ein- / Ausschalten der akustischen Warnungen
+  * Ein- / Ausschalten der optischen Warnungen
 
 ##Hardware
 * Prozessor: ATmega 328P, Arduino-Bootloader
@@ -59,14 +61,14 @@ Bezeichung | Anschluß
 -----------|---------
 VCC  | Versorgungsspannung 5V
 GND  | MAsse
-SCE  | Nokia 5110 Display
-RST  | Nokia 5110 Display
-D/C  | Nokia 5110 Display
-MOSI | Nokia 5110 Display
-SCLK | Nokia 5110 Display
-RST  | Reset
-TX   | Tranceive (Programmierung)
-RX   | Receive (Programmierung)
+SCE  | Nokia 5110 Display SCE
+RST  | Nokia 5110 Display RST
+D/C  | Nokia 5110 Display D/C
+MOSI | Nokia 5110 Display MOSI
+SCLK | Nokia 5110 Display SCLK
+RST  | Reset (Arduino Reset)
+TX   | Tranceive (Arduino Serial Programming)
+RX   | Receive (Arduino Serial Programming)
 RT1  | Rotary Encoder
 RT2  | Rotary Encoder
 BTN  | Button zur Eingabe
