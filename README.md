@@ -2,7 +2,7 @@
 BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 
 ## Inhalt
-- [Funktionen](#)
+- [Funktionen](#Funktionen)
 	- [Maischen](#)
 	- [Kochen](#)
 	- [Heizen](#)
