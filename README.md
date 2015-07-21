@@ -76,3 +76,11 @@ RL1  | Relais 1 (Kocher oder Heizplatte)
 RL2  | Relais 2 (Rührwerk)
 TMP  | Temperatursensor Data
 BZZ  | Summer
+
+## Bilder
+
+###Board unbestückt
+![Schaltplan](/Hardware/Board.jpg)
+
+###Board bestückt
+![Schaltplan](/Hardware/Board_components.jpg)
