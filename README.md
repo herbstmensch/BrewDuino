@@ -1,23 +1,21 @@
 # BrewDuino
 BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 
-##Table of Contents
-
-- [BrewDuino](#)
-	- [Funktionen](#)
-		- [Maischen](#)
-		- [Kochen](#)
-		- [Heizen](#)
-		- [Timer](#)
-		- [Einstellungen (noch nicht implementiert)](#)
-	- [Hardware](#)
-		- [Schaltplan](#)
-		- [Board](#)
-		- [Bauteile](#)
-		- [Anschlüsse](#)
-	- [Bilder](#)
-		- [Board unbestückt](#)
-		- [Board bestückt](#)
+## Inhalt
+- [Funktionen](#)
+	- [Maischen](#)
+	- [Kochen](#)
+	- [Heizen](#)
+	- [Timer](#)
+	- [Einstellungen (noch nicht implementiert)](#)
+- [Hardware](#)
+	- [Schaltplan](#)
+	- [Board](#)
+	- [Bauteile](#)
+	- [Anschlüsse](#)
+- [Bilder](#)
+	- [Board unbestückt](#)
+	- [Board bestückt](#)
 
 ### Funktionen
 
