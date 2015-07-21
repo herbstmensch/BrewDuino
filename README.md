@@ -1,49 +1,67 @@
 # BrewDuino
 BrewDuino ist eine einfache Brau-Steuerungs-Software für Hobbybrauer.
 
-## Funktionen
+##Table of Contents
 
-### Maischen
+- [BrewDuino](#)
+	- [Funktionen](#)
+		- [Maischen](#)
+		- [Kochen](#)
+		- [Heizen](#)
+		- [Timer](#)
+		- [Einstellungen (noch nicht implementiert)](#)
+	- [Hardware](#)
+		- [Schaltplan](#)
+		- [Board](#)
+		- [Bauteile](#)
+		- [Anschlüsse](#)
+	- [Bilder](#)
+		- [Board unbestückt](#)
+		- [Board bestückt](#)
+
+### Funktionen
+
+#### Maischen
 * Definition und Ausführung des Kompletten Maischeplans.
 * Optische und akustische Warung bei Erreichen der Einmaischtemperatur
 * Unterbrechung des Maischeplans, bis eingemaischt wurde
 * Optische und akustische Warung bei Erreichen der Abmaischtemperatur
 
-### Kochen
+#### Kochen
 * Freie Definition der Hopfengaben
 * Sekundengenaue Messung der Kochzeit
 * Optische und akustische Warung für Hopfengaben
 * Optische und akustische Warung nach Ablauf der Kochzeit
 
-### Heizen
+#### Heizen
 * Heizt auf eine eingegebene Temperatur
 * Hält diese Temperatur dauerhaft
 
-### Timer
+#### Timer
 * Countdown einer eingegebenen Zeit
 * Optische und akustische Warung bei Ablauf der Zeit
 
-### Einstellungen (noch nicht implementiert)
+#### Einstellungen (noch nicht implementiert)
 * Anpassung aller Betriebsparameter:
   * Ein-Ausschalt Temperaturoffset
   * Intervall der Temperaturmessungen
   * Ein- / Ausschalten der akustischen Warnungen
   * Ein- / Ausschalten der optischen Warnungen
 
-##Hardware
+### Hardware
 * Prozessor: ATmega 328P, Arduino-Bootloader
 * Display: Nokia 5110 Display (PCD8544)
 * SainSmart Relaiskarte
 * DS18B20 Temperatursensor
 * Rotary Encoder mit Button
  
-###Schaltplan
+#### Schaltplan
 ![Schaltplan](/Hardware/BrewDuino_Schaltplan.png)
 
-###Board
+#### Board
 ![PCB](/Hardware/BrewDuino_Leiterplatte.png)
 
-###Bauteile
+#### Bauteile
 Bezeichnung | Bauteil
 ------------ | -------------
 C1 | Kondensator 22 uF
@@ -56,7 +74,7 @@ JX | PinHeader
 XTAL2 | Quartz 16 Mhz
 R1 | Wiederstand 220 Ohm
 
-###Anschlüsse
+#### Anschlüsse
 Bezeichung | Anschluß
 -----------|---------
 VCC  | Versorgungsspannung 5V
@@ -77,10 +95,10 @@ RL2  | Relais 2 (Rührwerk)
 TMP  | Temperatursensor Data
 BZZ  | Summer
 
-## Bilder
+### Bilder
 
-###Board unbestückt
+#### Board unbestückt
 ![Schaltplan](/Hardware/Board.jpg)
 
-###Board bestückt
+#### Board bestückt
 ![Schaltplan](/Hardware/Board_components.jpg)
