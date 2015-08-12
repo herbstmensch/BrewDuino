@@ -51,7 +51,7 @@ void doTimer(){
     s += sec;
     char buf[14];
     s.toCharArray(buf,14);
-    printRow(buf, CENTER, 4);
+    printRow(buf, CENTER, 3);
   }
   
   if(rest <= 0){

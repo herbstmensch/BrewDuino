@@ -116,9 +116,9 @@ void setup()   {
   printRow(COPYRIGHT, LEFT, 32);
   printRow(COPYRIGHT2, RIGHT, 40);
 
-#if SERIAL != N
+  #if SERIAL != N
   Serial.begin(9600);
-#endif
+  #endif
 
   pinMode(PIN_BG_LIGHT, OUTPUT);
   pinMode(PIN_HEATER, OUTPUT);
@@ -135,7 +135,7 @@ void setup()   {
   setSollTemp(MIN_TEMP);
   isHeating = false;
 
- initThermometer();
+  initThermometer();
 
   checkForErrors();
   delay(2000);
@@ -149,15 +149,12 @@ void setup()   {
 
 void loop() {
   fsmMain.update();
-
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-    if ( b == ClickEncoder::Held ) {
-      fsmMain.transitionTo(stateMenu);
-    }
+  
+  if ( encoder->getButton() == ClickEncoder::Held ) {
+    fsmMain.transitionTo(stateMenu);
   }
 
-  readTemperature(false);
+  readTemperature();
   checkHeatingStatus(false);
   addTemperature(false);
 
@@ -171,8 +168,23 @@ void initThermometer(){
   // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
   sensors.setResolution(thermometer, 9);
   //Init Temp array
-  for (int i = 0; i < TMP_SMOOTH; i++)
-    readTemperature(true);
+  for (int i = 0; i < TMP_SMOOTH; i++){
+    sensors.setWaitForConversion(true);
+    sensors.requestTemperatures();
+     //Letzte Temperatur dieser Position aus Summe nehmen
+    tempTotal -= lastTemps[tmpIndex];
+    //Neue Temperatur dieser Position schreiben
+    lastTemps[tmpIndex] = sensors.getTempC(thermometer);
+    //Neue Temperatur dieser Position zur Summe hinzunehmen und Position erhöhen
+    tempTotal += lastTemps[tmpIndex++];
+
+    //Durchschnitt errechnen
+    temp = tempTotal / TMP_SMOOTH;
+  }
+  
+  tmpIndex = 0;
+  sensors.setWaitForConversion(false);
+  sensors.requestTemperatures();
 }
 
 void enterMenu() {
@@ -329,13 +341,11 @@ void timer() {
   fsmSettings.update();
 }*/
 
-void readTemperature(bool force) {
+void readTemperature() {
+  
   //Gelesen wir nur alle 2,5 sec.
-  if (millis() - lastTempMillis > 2500 || force) {
+  if (millis() - lastTempMillis > 2500 && sensors.isConversionAvailable(0)) {
     lastTempMillis = millis();
-
-    //Aktuelle Temperatur lesen.
-    sensors.requestTemperatures();
 
     //Letzte Temperatur dieser Position aus Summe nehmen
     tempTotal -= lastTemps[tmpIndex];
@@ -350,6 +360,9 @@ void readTemperature(bool force) {
     //Ggf. Position korrigieren
     if (tmpIndex >= TMP_SMOOTH)
       tmpIndex = 0;
+
+    //Neue Temperatur anfordern
+    sensors.requestTemperatures();
   }
 }
 
@@ -445,8 +458,10 @@ void alarm() {
 void doAlert() {
   unsigned long dur = millis() - alertMillis;
 
-  if ((dur / 250) % 2 == 0) {
-    tone(PIN_BUZZER, 262, 250);
+  if ((dur / 250) % 4 == 0) {
+    tone(PIN_BUZZER, 800, 250);
+  } else if ((dur / 250) % 2 == 0) {
+    tone(PIN_BUZZER, 970, 250);
   } else {
     noTone(PIN_BUZZER);
   }
@@ -469,8 +484,7 @@ void cancelAlarm() {
 }
 
 bool buttonClicked() {
-  ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open && b == ClickEncoder::Clicked )
+  if (encoder->getButton() == ClickEncoder::Clicked )
     return true;
   return false;
 }
