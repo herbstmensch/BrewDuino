@@ -1,6 +1,6 @@
 #define CREATOR "Herbstmensch"
 #define PROG_NAME "BrewDuino"
-#define PROG_VERSION "v0.9"
+#define PROG_VERSION "v1.0"
 #define COPYRIGHT "(c) 2015 - "
 #define COPYRIGHT2 "Tim Herbst"
 #include <LCD5110_Basic.h>
