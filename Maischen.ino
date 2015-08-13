@@ -145,6 +145,7 @@ void prepareReachEinmaischTemp() {
 void reachEinmaischTemp() {
   if(sollTemp == MIN_TEMP){
     setSollTemp(einmaischTemp);
+    turnOnStiring();
     
     clrScr(false,false);
     
@@ -289,6 +290,7 @@ void reachAbmaischTemp() {
   }
   if(temp >= abmaischTemp){
     alarm();
+    turnOffStiring();
     fsmMain.immediateTransitionTo(stateMenu);
   }
   
