@@ -15,7 +15,7 @@
 #define PIN_ROTARY_2 3
 #define PIN_ROTARY_BUTTON 4
 #define PIN_BG_LIGHT A0
-#define PIN_RUEHRER 5
+#define PIN_STIRER 5
 #define PIN_HEATER 6
 #define PIN_THERMOMETER 7
 #define PIN_BUZZER 8
@@ -104,7 +104,7 @@ unsigned long lastTempMillis;
 unsigned long alertMillis = 0;
 
 bool first = false;
-bool isHeating;
+bool isHeating, isStiring = false;
 
 void setup()   {
   //LCD Setup
@@ -122,8 +122,12 @@ void setup()   {
 
   pinMode(PIN_BG_LIGHT, OUTPUT);
   pinMode(PIN_HEATER, OUTPUT);
+  pinMode(PIN_STIRER, OUTPUT);
   digitalWrite(PIN_BG_LIGHT, LOW);
   digitalWrite(PIN_HEATER, HIGH);
+  digitalWrite(PIN_STIRER, HIGH);
+  
+  isStiring = false;
 
   //Encoder und Interrupt Setup
   encoder = new ClickEncoder(PIN_ROTARY_1, PIN_ROTARY_2, PIN_ROTARY_BUTTON, 4);
@@ -402,6 +406,18 @@ void turnOnHeating() {
   isHeating = true;
   digitalWrite(PIN_HEATER, LOW);
   addTemperature(true);
+}
+
+void turnOffStiring() {
+  //Toggle Relais
+  isStiring = false;
+  digitalWrite(PIN_STIRER, HIGH);
+}
+
+void turnOnStiring() {
+  //Toggle Relais
+  isStiring = true;
+  digitalWrite(PIN_STIRER, LOW);
 }
 
 void addTemperature(boolean force) {
