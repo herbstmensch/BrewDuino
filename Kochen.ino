@@ -87,7 +87,7 @@ void defineHopfengaben() {
   
   if(buttonClicked()){
     aktuelleHopfengabe += 1;
-    if(aktuelleHopfengabe+1 >= anzahlHopfengaben){
+    if(aktuelleHopfengabe+1 > anzahlHopfengaben){
       fsmKochen.immediateTransitionTo(stateDoKochen);
     } else {
       hopfengaben[aktuelleHopfengabe] = hopfengaben[aktuelleHopfengabe-1]+1;
