@@ -44,7 +44,7 @@ int errors = 0, lastErrors = 0;
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
 LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
-char lcdBuf[14]; //Buffer für Konkatenierte Display ausgaben
+char lcdBuf[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Buffer für Konkatenierte Display ausgaben
 
 //Encoder einrichten;
 ClickEncoder *encoder;
@@ -426,13 +426,14 @@ void addTemperature(boolean force) {
   if (temp != lastTemp || force) {
     lastTemp = temp;
     lcd.clrRow(5);
-    String s = (isHeating ? "H " : "");
-    s += "ist: ";
-    s += temp;
-    s += "~ C";
-    char buf[14];
-    s.toCharArray(buf, 14);
-    printRow(buf, RIGHT, 40);
+   // String s = (isHeating ? "H " : "");
+   // s += "ist: ";
+   // s += temp;
+   // s += "~ C";
+   // char buf[14];
+   // s.toCharArray(buf, 14);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C",isHeating ? "H " : "",temp)
+    printRow(lcdBuf, RIGHT, 40);
   }
 }
 
