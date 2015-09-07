@@ -432,7 +432,7 @@ void addTemperature(boolean force) {
    // s += "~ C";
    // char buf[14];
    // s.toCharArray(buf, 14);
-    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C",isHeating ? "H " : "",temp)
+    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C\0",isHeating ? "H " : "",temp)
     printRow(lcdBuf, RIGHT, 40);
   }
 }
