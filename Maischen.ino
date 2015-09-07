@@ -145,11 +145,12 @@ void reachEinmaischTemp() {
     
     lcd.print("Warte auf", CENTER, 8);
     lcd.print("Einmaischtemp", CENTER, 16);
-    String s = "";
-    s += einmaischTemp;
-    s += "~ C";
-    char buf[14];
-    s.toCharArray(buf,14);
+    //String s = "";
+    //s += einmaischTemp;
+    //s += "~ C";
+    char lcdBuf[14];
+    snprintf(buf,14,"%i~C",einmaischTemp)
+    //s.toCharArray(buf,14);
     lcd.print(buf, CENTER, 24);
   }
   if(temp >= einmaischTemp){
