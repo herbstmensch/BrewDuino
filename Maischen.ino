@@ -1,8 +1,8 @@
 int einmaischTemp = 48;
 int abmaischTemp = 78;
 int anzahlRasten = 3;
-int* rastTemp=0;
-int* rastDauer=0;
+int[10] rastTemp={0,0,0,0,0,0,0,0,0,0};
+int[10] rastDauer={0,0,0,0,0,0,0,0,0,0};
 
 int aktuelleRast = 0;
 int subState = 0;
@@ -39,6 +39,8 @@ void enterAnzahlRasten() {
     anzahlRasten += encoderValue;
     if(anzahlRasten < 0)
       anzahlRasten = 0;
+    if(anzahlRasten > 10)
+      anzahlRasten = 10;
     
     clrScr(false,false);
     lcd.print("Anzahl Rasten",0,16);
@@ -50,14 +52,6 @@ void enterAnzahlRasten() {
   if(buttonClicked()){
     if(anzahlRasten > 0){
       subState = 0;
-      if (rastTemp != 0) {
-        delete [] rastTemp;
-      }
-      if (rastDauer != 0) {
-        delete [] rastDauer;
-      }
-      rastTemp = new int[anzahlRasten];
-      rastDauer = new int[anzahlRasten];
       aktuelleRast = 0;
       rastTemp[aktuelleRast] = einmaischTemp;
       rastDauer[aktuelleRast] = 30;
@@ -106,7 +100,7 @@ void defineRast() {
       subState = 0;
       aktuelleRast += 1;
       first = true;
-      if(aktuelleRast >= anzahlRasten){
+      if(aktuelleRast > anzahlRasten){
         fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
       } else {
         rastTemp[aktuelleRast] = rastTemp[aktuelleRast-1];
