@@ -44,6 +44,7 @@ int errors = 0, lastErrors = 0;
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
 LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
+char lcdBuf[14]; //Buffer für Konkatenierte Display ausgaben
 
 //Encoder einrichten;
 ClickEncoder *encoder;
