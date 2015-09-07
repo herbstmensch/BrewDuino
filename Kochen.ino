@@ -112,12 +112,13 @@ void reachKochTemp() {
     
     lcd.print("Warte auf", CENTER, 16);
     lcd.print("Kochtemp.", CENTER, 24);
-    String s = "";
-    s += sollTemp;
-    s += "~ C";
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 32);
+    //String s = "";
+    //s += sollTemp;
+    //s += "~ C";
+    //char buf[14];
+    //s.toCharArray(buf,14);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~ C\0",sollTemp)
+    lcd.print(lcdBuf, CENTER, 32);
   }
   
   if(temp >= sollTemp){
@@ -145,19 +146,23 @@ void waitKochDauer() {
     clrScr(false,false);
     lcd.print("Kochen:", CENTER, 16);
     
-    String s = "noch ";
+    //String s = "noch ";
     if(kochzeit > 60){
-      s += std;
-      s += sec%2==0?":":" ";
+      //s += std;
+      //s += sec%2==0?":":" ";
+      snprintf(lcdBuf,sizeof(lcdBuf),"noch %.2i%s%.2i%s%.2i\0",std,sec%2==0?":":" ",min,sec%2==0?":":" ",sec);
+    } else {
+      snprintf(lcdBuf,sizeof(lcdBuf),"noch %.2i%s%.2i\0",min,sec%2==0?":":" ",sec);
     }
-    s += min < 10 ? "0":"";
-    s += min;
-    s += sec%2==0?":":" ";
-    s += sec < 10 ? "0":"";
-    s += sec;
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    //s += min < 10 ? "0":"";
+    //s += min;
+    //s += sec%2==0?":":" ";
+    //s += sec < 10 ? "0":"";
+    //s += sec;
+    //char buf[14];
+    //s.toCharArray(buf,14);
+    
+    lcd.print(lcdBuf, CENTER, 24);
     
     //Hopfengabe?
     if(anzahlHopfengaben-1 > alertedHopfengaben){
@@ -185,16 +190,19 @@ void alertHopfengabe(){
     alarm();
     hgMillis = alertMillis;
     clrScr(false, false);
-    String s = "";
-    s += (alertedHopfengaben+1);
-    s += ". Hopfeng.";
-    char buf[14];
-    s.toCharArray(buf,14);
-    s = "";
-    s += hopfengaben[alertedHopfengaben];
-    s += "min. Kochz.";
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 16);
+    //String s = "";
+    //s += (alertedHopfengaben+1);
+    //s += ". Hopfeng.";
+    //char buf[14];
+    //s.toCharArray(buf,14);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i. Hopfeng.\0",(alertedHopfengaben+1));
+    lcd.print(lcdBuf, CENTER, 16);
+    //s = "";
+    //s += hopfengaben[alertedHopfengaben];
+    //s += "min. Kochz.";
+    //s.toCharArray(buf,14);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i min. Kochz.\0",hopfengaben[alertedHopfengaben]);
+    lcd.print(lcdBuf, CENTER, 24);
   }
   
   if(buttonClicked()){
