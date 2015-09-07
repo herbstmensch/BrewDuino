@@ -148,10 +148,9 @@ void reachEinmaischTemp() {
     //String s = "";
     //s += einmaischTemp;
     //s += "~ C";
-    char lcdBuf[14];
-    snprintf(buf,14,"%i~C",einmaischTemp)
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~C\0",einmaischTemp)
     //s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    lcd.print(lcdBuf, CENTER, 24);
   }
   if(temp >= einmaischTemp){
     setSollTemp(MIN_TEMP);
