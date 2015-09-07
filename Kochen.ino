@@ -1,6 +1,6 @@
 int kochzeit = 90;
 int anzahlHopfengaben = 3;
-int* hopfengaben=0;
+int[10] hopfengaben={0,0,0,0,0,0,0,0,0,0};
 int aktuelleHopfengabe=1;
 int alertedHopfengaben = 0;
 
@@ -37,6 +37,8 @@ void enterAnzahlHopfengaben() {
     anzahlHopfengaben += encoderValue;
     if(anzahlHopfengaben < 0)
       anzahlHopfengaben = 0;
+    if(anzahlHopfengaben > 10)
+      anzahlHopfengaben = 10;
       
     clrScr(false,false);
     lcd.print("Anz. Hopfeng.",0,16);
@@ -48,10 +50,6 @@ void enterAnzahlHopfengaben() {
   if(buttonClicked()){
     first = true;
     if(anzahlHopfengaben > 0){
-      if (hopfengaben != 0) {
-        delete [] hopfengaben;
-      }
-      hopfengaben = new int[anzahlHopfengaben];
       aktuelleHopfengabe = 0;
       hopfengaben[aktuelleHopfengabe] = 20>kochzeit?kochzeit:20;
       fsmKochen.immediateTransitionTo(stateDefineHopfengaben);
