@@ -33,25 +33,19 @@ void doTimer(){
   long rest = dauer - (millis()-storedSystemMillis);
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
-  if(lastRest-rest > 500){
+  if(lastRest-rest >= 500){
     lastRest = rest;
-    long std = ((rest/1000) / 60) / 60;
-    long min = ((rest/1000) / 60) % 60;
-    long sec = (rest/1000) % 60;
+    int std = ((rest/1000) / 60) / 60;
+    int min = ((rest/1000) / 60) % 60;
+    int sec = (rest/1000) % 60;
     
-    String s = "";
-    if(rastDauer[aktuelleRast] > 60){
-      s += std;
-      s += (rest/500)%2==0?":":" ";
+    if(time > 60){
+      snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"%.2i:%.2i:%.2i\0":"%.2i %.2i %.2i\0",std,min,sec);
+    } else {
+      snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"%02d:%02d\0":"%02d %02d\0",min,sec);
     }
-    s += min < 10 ? "0":"";
-    s += min;
-    s += (rest/500)%2==0?":":" ";
-    s += sec < 10 ? "0":"";
-    s += sec;
-    char buf[14];
-    s.toCharArray(buf,14);
-    printRow(buf, CENTER, 3);
+   
+    printRow(lcdBuf, CENTER, 3);
   }
   
   if(rest <= 0){

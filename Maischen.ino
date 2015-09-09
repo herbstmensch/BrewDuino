@@ -1,8 +1,8 @@
 int einmaischTemp = 48;
 int abmaischTemp = 78;
 int anzahlRasten = 3;
-int[10] rastTemp={0,0,0,0,0,0,0,0,0,0};
-int[10] rastDauer={0,0,0,0,0,0,0,0,0,0};
+int rastTemp[10] = {0,0,0,0,0,0,0,0,0,0};
+int rastDauer[10] = {0,0,0,0,0,0,0,0,0,0};
 
 int aktuelleRast = 0;
 int subState = 0;
@@ -100,7 +100,7 @@ void defineRast() {
       subState = 0;
       aktuelleRast += 1;
       first = true;
-      if(aktuelleRast > anzahlRasten){
+      if(aktuelleRast >= anzahlRasten){
         fsmMaischen.immediateTransitionTo(stateEnterAbmaischTemp);
       } else {
         rastTemp[aktuelleRast] = rastTemp[aktuelleRast-1];
@@ -145,13 +145,14 @@ void reachEinmaischTemp() {
     
     lcd.print("Warte auf", CENTER, 8);
     lcd.print("Einmaischtemp", CENTER, 16);
-    //String s = "";
-    //s += einmaischTemp;
-    //s += "~ C";
-    snprintf(lcdBuf,sizeof(lcdBuf),"%i~C\0",einmaischTemp)
-    //s.toCharArray(buf,14);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~C\0",einmaischTemp);
     lcd.print(lcdBuf, CENTER, 24);
   }
+  
+  #if DEBUG == 1
+  temp = einmaischTemp+1;
+  #endif
+  
   if(temp >= einmaischTemp){
     setSollTemp(MIN_TEMP);
     alarm();
@@ -191,18 +192,15 @@ void reachRastTemp() {
     clrScr(false,false);
     
     lcd.print("Warte auf", CENTER, 8);
-    String s = "";
-    s += aktuelleRast+1;
-    s += ". Rast Temp.";
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 16);
-    s = "";
-    s += rastTemp[aktuelleRast];
-    s += "~ C";
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i. Rast Temp.\0",aktuelleRast+1);
+    lcd.print(lcdBuf, CENTER, 16);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~ C\0",rastTemp[aktuelleRast]);
+    lcd.print(lcdBuf, CENTER, 24);
   }
+
+  #if DEBUG == 1
+  temp = rastTemp[aktuelleRast]+1;
+  #endif
   
   if(temp >= rastTemp[aktuelleRast]){
     fsmMaischen.immediateTransitionTo(stateWaitRastDauer);
@@ -219,40 +217,26 @@ void waitRastDauer() {
   long rest = dauer - (millis()-storedSystemMillis);
   
   //Anzeige nur ändern, wenn eine Sekunde vergangen ist.
-  if(lastRest-rest > 1000){
+  if(lastRest-rest >= 500){
     lastRest = rest;
-    long std = ((rest/1000) / 60) / 60;
-    long min = ((rest/1000) / 60) % 60;
-    long sec = (rest/1000) % 60;
+    int std = ((rest/1000) / 60) / 60;
+    int min = ((rest/1000) / 60) % 60;
+    int sec = (rest/1000) % 60;
   
     clrScr(false,false);
-    String s = "";
-    s += aktuelleRast+1;
-    s += ". Rast:";
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 8);
+
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i. Rast:\0",aktuelleRast+1);
+    lcd.print(lcdBuf, CENTER, 8);
     
-    s = "";
-    s += rastTemp[aktuelleRast];
-    s += "~ C / ";
-    s += rastDauer[aktuelleRast];
-    s += "min";
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 16);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~ C / %imin\0",rastTemp[aktuelleRast],rastDauer[aktuelleRast]);
+    lcd.print(lcdBuf, CENTER, 16);
     
-    s = "noch ";
     if(rastDauer[aktuelleRast] > 60){
-      s += std;
-      s += sec%2==0?":":" ";
+     snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"noch %.2i:%.2i:%.2i\0":"noch %.2i %.2i %.2i\0",std,min,sec);
+    } else {
+      snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"noch %02d:%02d\0":"noch %02d %02d\0",min,sec);
     }
-    s += min < 10 ? "0":"";
-    s += min;
-    s += sec%2==0?":":" ";
-    s += sec < 10 ? "0":"";
-    s += sec;
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    lcd.print(lcdBuf, CENTER, 24);
   }
   
   if(rest <= 0){
@@ -275,12 +259,8 @@ void reachAbmaischTemp() {
     
     lcd.print("Warte auf", CENTER, 8);
     lcd.print("Abmaischtemp.", CENTER, 16);
-    String s = "";
-    s += abmaischTemp;
-    s += "~ C";
-    char buf[14];
-    s.toCharArray(buf,14);
-    lcd.print(buf, CENTER, 24);
+    snprintf(lcdBuf,sizeof(lcdBuf),"%i~ C\0",abmaischTemp);
+    lcd.print(lcdBuf, CENTER, 24);
   }
   if(temp >= abmaischTemp){
     alarm();

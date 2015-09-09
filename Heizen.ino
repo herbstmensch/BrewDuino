@@ -3,8 +3,8 @@ void doHeizen(){
   if(encoderValue != 0 || first){
     first = false;
     setSollTemp(sollTemp + encoderValue);
-    if(sollTemp > 101)
-      setSollTemp(101);
+    if(sollTemp > 100)
+      setSollTemp(100);
     if(sollTemp < 0)
       setSollTemp(0);
       

@@ -34,6 +34,7 @@
 #define MAX_LONG 2147483647L;
 #define ENC_HALFSTEP
 #define SERIAL N
+#define DEBUG 1
 
 //Fehler festlegen
 #define ERROR_NO_THERMOMETER 1
@@ -426,13 +427,7 @@ void addTemperature(boolean force) {
   if (temp != lastTemp || force) {
     lastTemp = temp;
     lcd.clrRow(5);
-   // String s = (isHeating ? "H " : "");
-   // s += "ist: ";
-   // s += temp;
-   // s += "~ C";
-   // char buf[14];
-   // s.toCharArray(buf, 14);
-    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C\0",isHeating ? "H " : "",temp)
+    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C\0",isHeating ? "H " : "",temp);
     printRow(lcdBuf, RIGHT, 40);
   }
 }
