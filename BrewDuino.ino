@@ -46,6 +46,7 @@ int errors = 0, lastErrors = 0;
 LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
 char lcdBuf[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Buffer für Konkatenierte Display ausgaben
+char displayBuffer[6][15] = {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 //Encoder einrichten;
 ClickEncoder *encoder;
@@ -450,10 +451,19 @@ void clrScr(bool clearFirst, bool clearLast) {
 }
 
 void printRow(char* text, int pos, int row) {
-  if (row > 5)
+  if (row > 5) //Received pixel instead of line
     row = row / 8;
-  lcd.clrRow(row);
-  lcd.print(text, pos, row * 8);
+    
+  if(row > 5) return; //We have only 6 lines.
+    
+  if(strcmp(text, displayBuffer[row])==0){
+    //Only print to display, when anything changed in line
+    lcd.clrRow(row);
+    lcd.print(text, pos, row * 8);
+    //Store line
+    strcpy(displayBuffer[row],text);
+    
+  }
 }
 
 void timerIsr() {
