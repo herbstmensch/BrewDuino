@@ -34,7 +34,7 @@
 #define MAX_LONG 2147483647L;
 #define ENC_HALFSTEP
 #define SERIAL N
-#define DEBUG 1
+#define DEBUG 0
 
 //Fehler festlegen
 #define ERROR_NO_THERMOMETER 1
@@ -46,7 +46,6 @@ int errors = 0, lastErrors = 0;
 LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
 char lcdBuf[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Buffer für Konkatenierte Display ausgaben
-char displayBuffer[6][15] = {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
 //Encoder einrichten;
 ClickEncoder *encoder;
@@ -456,14 +455,8 @@ void printRow(char* text, int pos, int row) {
     
   if(row > 5) return; //We have only 6 lines.
     
-  if(strcmp(text, displayBuffer[row])==0){
-    //Only print to display, when anything changed in line
     lcd.clrRow(row);
     lcd.print(text, pos, row * 8);
-    //Store line
-    strcpy(displayBuffer[row],text);
-    
-  }
 }
 
 void timerIsr() {
