@@ -129,6 +129,7 @@ void prepareKochDauer() {
   lastRest = MAX_LONG;
   storedSystemMillis = millis();
   dauer = kochzeit*60*1000L;
+  alertedHopfengaben = 0;
 }
 
 void waitKochDauer() {
@@ -153,7 +154,7 @@ void waitKochDauer() {
     
     //Hopfengabe?
     if(anzahlHopfengaben-1 > alertedHopfengaben){
-      long hg = hopfengaben[alertedHopfengaben+1]*60*1000;
+      long hg = hopfengaben[alertedHopfengaben]*60*1000;
       long verstrichen = (millis()-storedSystemMillis);
       if(verstrichen > hg){
         alertedHopfengaben += 1;
