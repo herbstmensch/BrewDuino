@@ -155,9 +155,11 @@ void setup()   {
 
 void loop() {
   fsmMain.update();
-  
-  if ( encoder->getButton() == ClickEncoder::Held ) {
-    fsmMain.transitionTo(stateMenu);
+  ClickEncoder::Button b = encoder->getButton();
+  if (b != ClickEncoder::Open) {
+    if ( b == ClickEncoder::Held ) {
+      fsmMain.transitionTo(stateMenu);
+    }
   }
 
   readTemperature();
@@ -500,8 +502,11 @@ void cancelAlarm() {
 }
 
 bool buttonClicked() {
-  if (encoder->getButton() == ClickEncoder::Clicked )
-    return true;
+  ClickEncoder::Button b = encoder->getButton();
+  if (b != ClickEncoder::Open) {
+    if (b == ClickEncoder::Clicked )
+      return true;
+  }
   return false;
 }
 
