@@ -231,7 +231,7 @@ void waitRastDauer() {
     snprintf(lcdBuf,sizeof(lcdBuf),"%i~ C / %imin\0",rastTemp[aktuelleRast],rastDauer[aktuelleRast]);
     lcd.print(lcdBuf, CENTER, 16);
     
-    if(rastDauer[aktuelleRast] > 60){
+    if(std > 0){
      snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"noch %.2i:%.2i:%.2i\0":"noch %.2i %.2i %.2i\0",std,min,sec);
     } else {
       snprintf(lcdBuf, sizeof(lcdBuf), (rest/500)%2==0?"noch %02d:%02d\0":"noch %02d %02d\0",min,sec);

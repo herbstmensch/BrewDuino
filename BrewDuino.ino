@@ -1,8 +1,8 @@
-#define CREATOR "Herbstmensch"
+#define CREATOR "rellit"
 #define PROG_NAME "BrewDuino"
 #define PROG_VERSION "v1.1"
-#define COPYRIGHT "(c) 2015 - "
-#define COPYRIGHT2 "Tim Herbst"
+#define COPYRIGHT "(c)2015 - 2019"
+#define COPYRIGHT2 "Tim Haller"
 #include <LCD5110_Basic.h>
 #include <ClickEncoder.h>
 #include <TimerOne.h>
@@ -30,10 +30,11 @@
 //Konfigurationsparameter festlegen
 #define TEMP_OFFSET 1
 #define MIN_TEMP -999
+#define KOCH_TEMP 100
 #define TMP_SMOOTH 5
 #define MAX_LONG 2147483647L;
 #define ENC_HALFSTEP
-#define SERIAL N
+#define SERIAL J
 #define DEBUG 0
 
 //Fehler festlegen
@@ -45,7 +46,7 @@ int errors = 0, lastErrors = 0;
 //Old LCD5110 lcd(8, 9, 10, 11, 12);
 LCD5110 lcd(PIN_LCD_SCLK, PIN_LCD_MOSI, PIN_LCD_DC, PIN_LCD_RST, PIN_LCD_SCE);
 extern uint8_t SmallFont[];
-char lcdBuf[15] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //Buffer für Konkatenierte Display ausgaben
+char lcdBuf[15] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Buffer für Konkatenierte Display ausgaben
 
 //Encoder einrichten;
 ClickEncoder *encoder;
@@ -55,6 +56,69 @@ int16_t encoderValue;
 OneWire oneWire(PIN_THERMOMETER);
 DallasTemperature sensors(&oneWire);
 DeviceAddress thermometer;
+
+//Funktions-Prototypen
+void initThermometer();
+void enterMenu() ;
+void leaveMenu();
+void enterError();
+void enterMaischen();
+void leaveMaischen();
+void enterKochen() ;
+void leaveKochen();
+void enterHeizen() ;
+void leaveHeizen() ;
+void enterTimer() ;
+void menu() ;
+void menuUp() ;
+void menuDown();
+void error() ;
+void maischen() ;
+void kochen() ;
+void heizen();
+void timer() ;
+void readTemperature() ;
+void setSollTemp(int t) ;
+void checkHeatingStatus(bool force);
+void turnOffHeating();
+void turnOnHeating();
+void turnOffStiring();
+void turnOnStiring() ;
+void addTemperature(boolean force);
+void clrScr(bool clearFirst, bool clearLast);
+void printRow(char* text, int pos, int row);
+void timerIsr() ;
+void forceFirstDisplay();
+void alarm() ;
+void doAlert() ;
+void cancelAlarm() ;
+bool buttonClicked();
+void checkForErrors();
+void doHeizen();
+void enterKochzeit() ;
+void enterAnzahlHopfengaben() ;
+void defineHopfengaben();
+void enterDoKochen();
+void doKochen() ;
+void prepareReachKochTemp();
+void reachKochTemp() ;
+void prepareKochDauer();
+void waitKochDauer() ;
+void alertHopfengabe();
+void enterEinmaischTemp() ;
+void enterAnzahlRasten() ;
+void defineRast();
+void enterAbmaischTemp() ;
+void prepareReachEinmaischTemp();
+void reachEinmaischTemp();
+void einmaischen();
+void reachRastTemp() ;
+void prepareRastDauer() ;
+void waitRastDauer() ;
+void reachAbmaischTemp();
+void doTimer();
+void prepareDoTimer();
+void enterTimerTime();
 
 //Main FSM und States definieren
 State stateMenu = State(enterMenu, menu, leaveMenu);
@@ -117,10 +181,9 @@ void setup()   {
   printRow(PROG_NAME" "PROG_VERSION, LEFT, 16);
   printRow(COPYRIGHT, LEFT, 32);
   printRow(COPYRIGHT2, RIGHT, 40);
-
-  #if SERIAL != N
   Serial.begin(9600);
-  #endif
+  Serial.print("Test");
+
 
   pinMode(PIN_BG_LIGHT, OUTPUT);
   pinMode(PIN_HEATER, OUTPUT);
@@ -128,7 +191,7 @@ void setup()   {
   digitalWrite(PIN_BG_LIGHT, LOW);
   digitalWrite(PIN_HEATER, HIGH);
   digitalWrite(PIN_STIRER, HIGH);
-  
+
   isStiring = false;
 
   //Encoder und Interrupt Setup
@@ -170,16 +233,16 @@ void loop() {
     doAlert();
 }
 
-void initThermometer(){
+void initThermometer() {
   sensors.begin();
   sensors.getAddress(thermometer, 0);
   // set the resolution to 9 bit (Each Dallas/Maxim device is capable of several different resolutions)
   sensors.setResolution(thermometer, 9);
   //Init Temp array
-  for (int i = 0; i < TMP_SMOOTH; i++){
+  for (int i = 0; i < TMP_SMOOTH; i++) {
     sensors.setWaitForConversion(true);
     sensors.requestTemperatures();
-     //Letzte Temperatur dieser Position aus Summe nehmen
+    //Letzte Temperatur dieser Position aus Summe nehmen
     tempTotal -= lastTemps[tmpIndex];
     //Neue Temperatur dieser Position schreiben
     lastTemps[tmpIndex] = sensors.getTempC(thermometer);
@@ -189,7 +252,7 @@ void initThermometer(){
     //Durchschnitt errechnen
     temp = tempTotal / TMP_SMOOTH;
   }
-  
+
   tmpIndex = 0;
   sensors.setWaitForConversion(false);
   sensors.requestTemperatures();
@@ -231,7 +294,7 @@ void leaveMaischen() {
 
 void enterKochen() {
   encoder->setAccelerationEnabled(true);
-  setSollTemp(100);
+  setSollTemp(KOCH_TEMP);
   checkHeatingStatus(true);
   fsmKochen.immediateTransitionTo(stateEnterKochzeit);
   clrScr(true, false);
@@ -263,7 +326,7 @@ void enterTimer() {
 
 /*void enterSettings(){
   fsmSettings.immediateTransitionTo();
-}*/
+  }*/
 
 void menu() {
   encoderValue = encoder->getValue();
@@ -318,15 +381,15 @@ void menuDown() {
 }
 
 void error() {
-  if(lastErrors != errors || first){
+  if (lastErrors != errors || first) {
 
     lastErrors = errors;
 
-    if(errors >= ERROR_NO_THERMOMETER){
+    if (errors >= ERROR_NO_THERMOMETER) {
       errors -= ERROR_NO_THERMOMETER;
       lcd.print("Kein Therm.", 0, 16);
     }
-    
+
   }
 }
 
@@ -347,10 +410,10 @@ void timer() {
 }
 /*void settings(){
   fsmSettings.update();
-}*/
+  }*/
 
 void readTemperature() {
-  
+
   //Gelesen wir nur alle 2,5 sec.
   if (millis() - lastTempMillis > 2500 && sensors.isConversionAvailable(0)) {
     lastTempMillis = millis();
@@ -429,7 +492,7 @@ void addTemperature(boolean force) {
   if (temp != lastTemp || force) {
     lastTemp = temp;
     lcd.clrRow(5);
-    snprintf(lcdBuf,sizeof(lcdBuf),"%sist: %i~ C\0",isHeating ? "H " : "",temp);
+    snprintf(lcdBuf, sizeof(lcdBuf), "%sist: %i~ C\0", isHeating ? "H " : "", temp);
     printRow(lcdBuf, RIGHT, 40);
   }
 }
@@ -454,11 +517,11 @@ void clrScr(bool clearFirst, bool clearLast) {
 void printRow(char* text, int pos, int row) {
   if (row > 5) //Received pixel instead of line
     row = row / 8;
-    
-  if(row > 5) return; //We have only 6 lines.
-    
-    lcd.clrRow(row);
-    lcd.print(text, pos, row * 8);
+
+  if (row > 5) return; //We have only 6 lines.
+
+  lcd.clrRow(row);
+  lcd.print(text, pos, row * 8);
 }
 
 void timerIsr() {
